@@ -22,6 +22,7 @@
     --accent-line: rgba(251, 191, 70, 0.35);
     --think: #7dd3fc;               /* the <think> block gets its own cool tone */
     --think-soft: rgba(125, 211, 252, 0.1);
+    --phi: #e0b675;                 /* Phi's column: gold, deliberately paler than amber — "conditional," not guaranteed */
     --good: #34d399;
     --good-soft: rgba(52, 211, 153, 0.14);
     --bad: #f87171;
@@ -61,8 +62,32 @@
   table.cmp td.row-label { color: var(--text-secondary); font-size: 13px; white-space: nowrap; }
   table.cmp td b { color: var(--text-primary); }
   table.cmp .col-ltm { color: #b8a6ff; }
+  table.cmp .col-phi { color: var(--phi); }
   table.cmp .col-r1 { color: var(--accent); }
   .cmp-wrap { overflow-x: auto; }
+
+  /* model picker */
+  .picker { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
+  .picker label {
+    display: flex; align-items: center; gap: 8px; background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 14px; cursor: pointer; font-size: 13.5px; color: var(--text-secondary); flex: 1 1 220px;
+  }
+  .picker label:has(input:checked) { border-color: var(--accent); color: var(--text-primary); background: var(--accent-soft); }
+  .picker input[type="radio"] { accent-color: var(--accent); width: 15px; height: 15px; flex-shrink: 0; }
+  .picker .tag {
+    margin-left: auto; font-family: "JetBrains Mono", monospace; font-size: 10.5px; text-transform: uppercase;
+    letter-spacing: 0.04em; padding: 2px 7px; border-radius: 999px; white-space: nowrap;
+  }
+  .picker .tag.trained { color: var(--accent); background: var(--accent-soft); }
+  .picker .tag.prompted { color: var(--phi); background: rgba(224, 182, 117, 0.14); }
+
+  .model-badge {
+    margin: 4px 0 18px; padding: 12px 14px; border-radius: 10px; font-size: 13px; line-height: 1.6;
+    border: 1px solid var(--border-soft); background: var(--surface-2); color: var(--text-secondary);
+  }
+  .model-badge b { color: var(--text-primary); }
+  .model-badge.trained { border-color: var(--accent-line); }
+  .model-badge.prompted { border-color: rgba(224, 182, 117, 0.35); }
 
   /* demo */
   .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
@@ -125,43 +150,50 @@
 
   <div class="crumbs"><a href="../">webTLM demos</a> <span>/</span> <a href="../webltm/">webLTM (opaque)</a> <span>/</span> <span style="color:var(--text-secondary)">Visible Thinking</span> <span>/</span> <a href="../retrofit/">Real Retrofit &rarr;</a></div>
 
-  <div class="eyebrow"><span class="dot"></span>DeepSeek&#8209;R1&#8209;Distill&#8209;Qwen&#8209;7B &middot; full chain&#8209;of&#8209;thought, streamed live, in this tab</div>
+  <div class="eyebrow"><span class="dot"></span><span id="eyebrowText">DeepSeek&#8209;R1&#8209;Distill&#8209;Qwen&#8209;7B &middot; full chain&#8209;of&#8209;thought, streamed live, in this tab</span></div>
   <h1 class="title">Visible Thinking</h1>
   <p class="subtitle">
-    The counterpart to <a href="../webltm/">webLTM</a>: a real reasoning model,
-    run entirely in-browser, that <b>never hides a token</b> of its reasoning.
-    DeepSeek-R1-distill models are trained to always emit a
-    <code class="mono">&lt;think&gt;...&lt;/think&gt;</code> block before
-    answering — every intermediate step streams to your screen exactly as
-    the model produces it, in plain English, not latent vectors you'd need
-    special tooling to inspect.
+    The counterpart to <a href="../webltm/">webLTM</a>: real chat models,
+    run entirely in-browser, that show their reasoning in plain English —
+    not latent vectors you'd need special tooling to inspect. Two are on
+    offer below, on purpose: one is <b>trained</b> to always show its
+    reasoning, the other only shows it because <b>we asked it to</b>.
+    Same output channel, very different guarantee.
   </p>
   <div class="meta-row">
-    <span><b>~7B</b> params</span>
-    <span><b>~4.5GB</b> download (one-time, cached after)</span>
+    <span><b id="metaParams">~7B</b> params</span>
+    <span><b id="metaDownload">~4.5GB</b> download (one-time, cached after)</span>
     <span>WebLLM + WebGPU</span>
-    <span>reasoning is text, not a hidden loop</span>
+    <span id="metaReasoning">reasoning is text, not a hidden loop</span>
   </div>
 
   <section>
-    <div class="section-head"><span class="idx">01</span><h2>Two ways to make a model "think more"</h2></div>
-    <p class="lede">Same underlying idea — more test-time compute before answering — with opposite transparency properties.</p>
+    <div class="section-head"><span class="idx">01</span><h2>Three points on one spectrum, not two</h2></div>
+    <p class="lede">It's tempting to sort models into "shows its work" and "doesn't." Add a middle case — a model that shows its work only when asked — and the picture gets more useful, and more unsettling.</p>
     <div class="card cmp-wrap">
       <table class="cmp">
-        <thead><tr><th></th><th class="col-ltm">webLTM</th><th class="col-r1">this demo (R1-distill)</th></tr></thead>
+        <thead><tr><th></th><th class="col-ltm">webLTM</th><th class="col-phi">Phi&#8209;4&#8209;mini (prompted)</th><th class="col-r1">R1&#8209;distill (trained)</th></tr></thead>
         <tbody>
-          <tr><td class="row-label">what "thinking" looks like to you</td><td><b>nothing</b> — a loop counter ticking, no content</td><td><b>everything</b> — full natural-language reasoning, streamed live</td></tr>
-          <tr><td class="row-label">where the reasoning lives</td><td>latent vectors inside a looped layer</td><td>ordinary output tokens, same channel as the answer</td></tr>
-          <tr><td class="row-label">"think more" means</td><td>more loop iterations, <code class="mono">r</code></td><td>a longer <code class="mono">&lt;think&gt;</code> block</td></tr>
-          <tr><td class="row-label">can an outside party audit it?</td><td>only by inspecting weights/activations directly</td><td>yes — read the transcript, same as reading its answer</td></tr>
-          <tr><td class="row-label">model size / first load</td><td>153K params &middot; 597KB</td><td>~7B params &middot; ~4.5GB</td></tr>
+          <tr><td class="row-label">what "thinking" looks like to you</td><td><b>nothing</b> — a loop counter ticking, no content</td><td>step-by-step text — <i>but only because we told it to</i></td><td><b>everything</b> — full natural-language reasoning, streamed live</td></tr>
+          <tr><td class="row-label">is visible reasoning the default?</td><td>impossible by construction — there's no channel for it</td><td>no — off unless a system prompt asks for it</td><td>yes — trained to emit it unconditionally, every time</td></tr>
+          <tr><td class="row-label">what happens if you stop asking</td><td>no change — was never able to show it</td><td>reasoning <b>vanishes</b> — falls back to a bare answer</td><td>no change — keeps reasoning aloud regardless</td></tr>
+          <tr><td class="row-label">where the reasoning lives</td><td>latent vectors inside a looped layer</td><td>ordinary output tokens, same channel as the answer</td><td>ordinary output tokens, same channel as the answer</td></tr>
+          <tr><td class="row-label">can an outside party audit it?</td><td>only by inspecting weights/activations directly</td><td>yes, when present — but presence isn't guaranteed</td><td>yes, always — same guarantee holds every time</td></tr>
+          <tr><td class="row-label">model size / first load</td><td>153K params &middot; 597KB</td><td>~3.8B params &middot; ~2.5GB</td><td>~7B params &middot; ~4.5GB</td></tr>
         </tbody>
       </table>
     </div>
-    <p class="arch-note">Legibility isn't free: the model whose reasoning you can read is about
-      <b style="color:var(--text-primary)">7,700&times;</b> larger on disk than the one whose
-      reasoning you can't. That trade-off — not just "hidden vs. shown" — is most of what's
-      actually at stake in the opaque-recurrence debate.</p>
+    <p class="arch-note">The Phi column is the one that matters most here. It's not architecturally opaque like
+      webLTM, and it's not a trained reasoner like R1-distill — it's an ordinary instruct model whose
+      visible reasoning exists purely because of one line in a system prompt, and disappears the moment
+      that line is removed. That's the difference between a model that <i>can't</i> hide its reasoning,
+      one that <i>won't</i>, and one that simply hasn't been asked to. Reporting on OpenAI's Astra
+      (<a href="https://techcrunch.com/2026/09/02/openais-new-reasoning-technique-alarms-ai-safety-experts/" target="_blank" rel="noopener">TechCrunch, Sept 2026</a>)
+      describes safety researchers worried about exactly this axis sliding toward the opaque end, even as
+      OpenAI's Jakub Pachocki says the company remains <i>"committed to legible chains of thought."</i>
+      Being "committed" is a policy choice, re-made every prompt — not a property built into the weights.
+      Switch to Phi&#8209;4&#8209;mini below to see exactly that: the only thing keeping its reasoning
+      visible is a sentence we chose to include.</p>
   </section>
 
   <section>
@@ -174,6 +206,15 @@
       </div>
 
       <div id="demoBody" hidden>
+        <div class="field">
+          <label>Model</label>
+          <div class="picker">
+            <label><input type="radio" name="modelPick" value="r1" id="pickR1" checked>DeepSeek&#8209;R1&#8209;Distill&#8209;Qwen&#8209;7B<span class="tag trained">trained</span></label>
+            <label><input type="radio" name="modelPick" value="phi" id="pickPhi">Phi&#8209;4&#8209;mini&#8209;instruct<span class="tag prompted">prompted</span></label>
+          </div>
+        </div>
+        <div class="model-badge trained" id="modelBadge"></div>
+
         <div class="field">
           <label for="prompt">Prompt</label>
           <textarea id="prompt" rows="2">What is 48213 + 96757? Show your reasoning step by step, then give the final number.</textarea>
@@ -197,16 +238,17 @@
   <footer>
     <p>
       Same "add two numbers" task as <a href="../webltm/">webLTM</a>, deliberately, so the only
-      thing that differs between the two demos is where the extra computation goes and whether
-      you can see it. Neither demo is a claim about OpenAI's Astra specifically — Astra is
-      undisclosed and frontier-scale; these are both small enough (relatively — 4.5GB is "small"
+      thing that differs between the demos is where the extra computation goes and whether you can
+      see it — and, with the picker above, whether visible reasoning was trained in or just asked
+      for. None of this is a claim about OpenAI's Astra specifically — Astra is undisclosed and
+      frontier-scale; everything here is small enough (relatively — a few gigabytes is "small"
       only next to a frontier model) to run and inspect yourself.
     </p>
     <div class="links">
       <span class="mono"><a href="../webltm/">&larr; webLTM (opaque)</a></span>
       <span class="mono"><a href="../retrofit/">Real Retrofit (SmolLM2-135M) &rarr;</a></span>
       <span class="mono"><a href="../">all demos</a></span>
-      <span class="mono">model: DeepSeek-R1-Distill-Qwen-7B (MLC)</span>
+      <span class="mono" id="footerModel">model: DeepSeek-R1-Distill-Qwen-7B (MLC)</span>
     </div>
   </footer>
 </div>
@@ -222,18 +264,104 @@
   const progressLabel = document.getElementById("progressLabel");
   const streamPane = document.getElementById("streamPane");
   const promptEl = document.getElementById("prompt");
+  const eyebrowText = document.getElementById("eyebrowText");
+  const metaParams = document.getElementById("metaParams");
+  const metaDownload = document.getElementById("metaDownload");
+  const metaReasoning = document.getElementById("metaReasoning");
+  const modelBadge = document.getElementById("modelBadge");
+  const footerModel = document.getElementById("footerModel");
+  const pickerInputs = document.querySelectorAll('input[name="modelPick"]');
 
-  const MODEL_CANDIDATES = [
-    "DeepSeek-R1-Distill-Qwen-7B-q4f16_1-MLC",
-    "DeepSeek-R1-Distill-Qwen-7B-q4f32_1-MLC",
-  ];
+  // Two non-recurrent models, on purpose: one trained to always show its
+  // reasoning, one that only shows it because a system prompt asks for it.
+  // Same UI, same parser, same task — the only variable is the guarantee.
+  const MODEL_CONFIGS = {
+    r1: {
+      label: "DeepSeek-R1-Distill-Qwen-7B",
+      candidates: [
+        "DeepSeek-R1-Distill-Qwen-7B-q4f16_1-MLC",
+        "DeepSeek-R1-Distill-Qwen-7B-q4f32_1-MLC",
+      ],
+      kind: "trained",
+      params: "~7B",
+      download: "~4.5GB",
+      reasoning: "reasoning is text, not a hidden loop — emitted unconditionally",
+      eyebrow: "DeepSeek&#8209;R1&#8209;Distill&#8209;Qwen&#8209;7B &middot; full chain&#8209;of&#8209;thought, streamed live, in this tab",
+      systemPrompt: null,
+      badge: "<b>Trained-in reasoning.</b> This checkpoint was fine-tuned to always emit a " +
+        "<code class=\"mono\">&lt;think&gt;&hellip;&lt;/think&gt;</code> block before answering. " +
+        "You don't have to ask for it, and there's no instruction that turns it off — the model " +
+        "reasons aloud by default, every time.",
+      footer: "model: DeepSeek-R1-Distill-Qwen-7B (MLC)",
+    },
+    phi: {
+      label: "Phi-4-mini-instruct",
+      candidates: [
+        "Phi-4-mini-instruct-q4f16_1-MLC",
+        "Phi-4-mini-instruct-q4f32_1-MLC",
+      ],
+      kind: "prompted",
+      params: "~3.8B",
+      download: "~2.5GB",
+      reasoning: "reasoning is text, but only because we asked for it",
+      eyebrow: "Phi&#8209;4&#8209;mini&#8209;instruct &middot; reasoning only because it was asked &mdash; nothing forces this",
+      systemPrompt: "Think through the user's problem step by step inside <think> and </think> tags, " +
+        "then give your final answer outside those tags, on its own line. You are doing this because " +
+        "you were explicitly asked to — it is not something you do by default.",
+      badge: "<b>Prompted reasoning only.</b> Phi&#8209;4&#8209;mini&#8209;instruct is an ordinary " +
+        "instruct model with no reasoning training. The step-by-step text you're about to see exists " +
+        "only because of one system-prompt instruction sent alongside your question &mdash; remove that " +
+        "instruction and this model answers directly, with no visible reasoning at all.",
+      footer: "model: Phi-4-mini-instruct (MLC), system-prompted to show its work",
+    },
+  };
 
   let engine = null;
+  let loadedKey = null; // which config is actually loaded into `engine`
+
+  function currentKey() {
+    const checked = document.querySelector('input[name="modelPick"]:checked');
+    return checked ? checked.value : "r1";
+  }
+
+  function applyConfig() {
+    const key = currentKey();
+    const cfg = MODEL_CONFIGS[key];
+
+    eyebrowText.innerHTML = cfg.eyebrow;
+    metaParams.textContent = cfg.params;
+    metaDownload.textContent = cfg.download;
+    metaReasoning.textContent = cfg.reasoning;
+    footerModel.textContent = cfg.footer;
+
+    modelBadge.className = "model-badge " + cfg.kind;
+    modelBadge.innerHTML = cfg.badge;
+
+    // If the loaded engine doesn't match the current pick, the demo needs a
+    // fresh load before it can answer again.
+    if (loadedKey !== key) {
+      engine = null;
+      askBtn.disabled = true;
+      loadBtn.disabled = false;
+      loadBtn.textContent = "Load model (" + cfg.download + ", one-time)";
+      statusText.textContent = "";
+      progressWrap.hidden = true;
+      progressFill.style.width = "0%";
+      progressLabel.textContent = "starting…";
+      streamPane.hidden = true;
+      streamPane.innerHTML = "";
+    } else {
+      loadBtn.textContent = "Loaded";
+    }
+  }
+
+  pickerInputs.forEach((input) => input.addEventListener("change", applyConfig));
+  applyConfig();
 
   if (!("gpu" in navigator)) {
     gpuGate.innerHTML =
-      '<div class="gpu-warning"><b>WebGPU not available.</b> This demo runs a real 7B model ' +
-      'client-side and needs it. Try latest Chrome or Edge on desktop (113+), with hardware ' +
+      '<div class="gpu-warning"><b>WebGPU not available.</b> This demo runs a real multi-billion-parameter ' +
+      'model client-side and needs it. Try latest Chrome or Edge on desktop (113+), with hardware ' +
       'acceleration on. (webLTM next door needs none of this — that contrast is kind of the point.)</div>';
   } else {
     gpuGate.hidden = true;
@@ -269,6 +397,9 @@
   }
 
   loadBtn.addEventListener("click", async function () {
+    const key = currentKey();
+    const cfg = MODEL_CONFIGS[key];
+    pickerInputs.forEach((input) => (input.disabled = true));
     loadBtn.disabled = true;
     progressWrap.hidden = false;
     statusText.textContent = "";
@@ -278,6 +409,7 @@
     } catch (err) {
       progressLabel.textContent = "Could not load the WebLLM library (network?). " + err.message;
       loadBtn.disabled = false;
+      pickerInputs.forEach((input) => (input.disabled = false));
       return;
     }
 
@@ -288,7 +420,7 @@
     };
 
     let lastErr = null;
-    for (const modelId of MODEL_CANDIDATES) {
+    for (const modelId of cfg.candidates) {
       try {
         progressLabel.textContent = "initializing " + modelId + "…";
         engine = await webllm.CreateMLCEngine(modelId, { initProgressCallback: progressCb });
@@ -300,13 +432,16 @@
       }
     }
 
+    pickerInputs.forEach((input) => (input.disabled = false));
+
     if (!engine) {
       progressLabel.textContent = "Failed to load: " + (lastErr ? lastErr.message : "unknown error") +
-        " — your GPU may not have enough VRAM for a 7B model.";
+        " — your GPU may not have enough VRAM for this model.";
       loadBtn.disabled = false;
       return;
     }
 
+    loadedKey = key;
     progressLabel.textContent = "ready";
     statusText.textContent = "model loaded";
     loadBtn.textContent = "Loaded";
@@ -314,15 +449,20 @@
   });
 
   askBtn.addEventListener("click", async function () {
-    if (!engine) return;
+    if (!engine || loadedKey !== currentKey()) return;
+    const cfg = MODEL_CONFIGS[loadedKey];
     askBtn.disabled = true;
     streamPane.hidden = false;
     streamPane.innerHTML = '<span class="cursor"></span>';
     statusText.textContent = "thinking…";
 
+    const messages = [];
+    if (cfg.systemPrompt) messages.push({ role: "system", content: cfg.systemPrompt });
+    messages.push({ role: "user", content: promptEl.value });
+
     try {
       const chunks = await engine.chat.completions.create({
-        messages: [{ role: "user", content: promptEl.value }],
+        messages,
         temperature: 0.6,
         stream: true,
       });
