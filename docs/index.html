@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>webTLM demos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0b0d14; --surface: #12151f; --border: #262b3d;
+    --text-primary: #e9eaf2; --text-secondary: #9195ab; --text-muted: #5d6178;
+    --violet: #8a6bff; --violet-soft: rgba(138,107,255,0.14);
+    --amber: #fbbf46; --amber-soft: rgba(251,191,70,0.14);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text-primary); font-family: "IBM Plex Sans", system-ui, sans-serif; padding: 0 20px; }
+  .wrap { max-width: 800px; margin: 0 auto; padding-block: 64px 80px; }
+  h1, h2 { font-family: "Sora", system-ui, sans-serif; text-wrap: balance; margin: 0; }
+  .mono { font-family: "JetBrains Mono", ui-monospace, monospace; }
+  a { color: inherit; }
+  h1.title { font-size: clamp(30px, 6vw, 42px); font-weight: 700; letter-spacing: -0.01em; }
+  .subtitle { margin-top: 14px; font-size: 16px; line-height: 1.6; color: var(--text-secondary); max-width: 62ch; }
+  .cards { margin-top: 40px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 620px) { .cards { grid-template-columns: 1fr; } }
+  .card {
+    display: block; text-decoration: none; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 26px; transition: border-color 0.15s;
+  }
+  .card:hover { border-color: var(--accent-hover, var(--border)); }
+  .card.violet:hover { border-color: var(--violet); }
+  .card.amber:hover { border-color: var(--amber); }
+  .card .tag {
+    display: inline-block; font-family: "JetBrains Mono", monospace; font-size: 11px; text-transform: uppercase;
+    letter-spacing: 0.05em; padding: 3px 9px; border-radius: 999px; margin-bottom: 14px;
+  }
+  .card.violet .tag { background: var(--violet-soft); color: var(--violet); }
+  .card.amber .tag { background: var(--amber-soft); color: var(--amber); }
+  .card h2 { font-size: 20px; font-weight: 600; color: var(--text-primary); }
+  .card p { margin: 10px 0 0; font-size: 14px; color: var(--text-secondary); line-height: 1.55; }
+  .card .meta { margin-top: 16px; font-family: "JetBrains Mono", monospace; font-size: 12px; color: var(--text-muted); }
+  footer { margin-top: 56px; border-top: 1px solid var(--border); padding-top: 20px; font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+  footer a { color: var(--text-secondary); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1 class="title">Two ways to make a model think longer</h1>
+  <p class="subtitle">
+    Same underlying question — what happens when you give a model more
+    test-time compute — answered by two small, from-scratch, in-browser
+    demos with opposite transparency properties. One hides every trace of
+    its reasoning by construction; the other can't hide anything if it tried.
+  </p>
+
+  <div class="cards">
+    <a class="card violet" href="webltm/">
+      <span class="tag">opaque recurrence</span>
+      <h2>webLTM</h2>
+      <p>A 153K-parameter recurrent-depth transformer that loops a single
+        block in latent space. No chain-of-thought channel exists in the
+        architecture — you see a loop counter and then the answer, nothing
+        in between.</p>
+      <div class="meta">153K params &middot; 597KB &middot; addition</div>
+    </a>
+    <a class="card amber" href="monitor/">
+      <span class="tag">visible chain-of-thought</span>
+      <h2>Visible Thinking</h2>
+      <p>DeepSeek-R1-Distill-Qwen-7B, run client-side via WebLLM. Every
+        reasoning token streams to the screen in plain English before the
+        final answer — the opposite design choice, same class of problem.</p>
+      <div class="meta">~7B params &middot; ~4.5GB &middot; same-flavor prompt</div>
+    </a>
+  </div>
+
+  <footer>
+    Both demos run entirely client-side, no server. Background and results:
+    see the <a href="https://github.com/vishalmysore/webTLM">webTLM repo</a>
+    and the write-up on OpenAI Astra's "opaque recurrence" and the
+    recurrent-depth literature these are built from.
+  </footer>
+</div>
+</body>
+</html>

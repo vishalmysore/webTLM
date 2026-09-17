@@ -1,0 +1,516 @@
+<title>webLTM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* webLTM is deliberately single-theme: a page about latent, unlit
+     reasoning is drawn as one committed dark world rather than toggled
+     light/dark, per the "one visual world" allowance. Everything below
+     is painted explicitly rather than derived from prefers-color-scheme. */
+  :root {
+    --bg: #0b0d14;
+    --surface: #12151f;
+    --surface-2: #171b29;
+    --border: #262b3d;
+    --border-soft: #1b1f2d;
+    --text-primary: #e9eaf2;
+    --text-secondary: #9195ab;
+    --text-muted: #5d6178;
+    --accent: #8a6bff;
+    --accent-soft: rgba(138, 107, 255, 0.14);
+    --accent-line: rgba(138, 107, 255, 0.35);
+    --good: #34d399;
+    --good-soft: rgba(52, 211, 153, 0.14);
+    --bad: #f87171;
+    --bad-soft: rgba(248, 113, 113, 0.14);
+    /* sequential blue ramp, light->dark = easy->hard (validated ordinal,
+       dark surface #0b0d14) */
+    --s1: #9ec5f4;
+    --s2: #6da7ec;
+    --s3: #3987e5;
+    --s4: #256abf;
+    --s5: #184f95;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text-primary);
+    font-family: "IBM Plex Sans", system-ui, sans-serif;
+    padding: 0 20px;
+  }
+  .wrap { max-width: 800px; margin: 0 auto; padding-block: 56px 80px; }
+
+  h1, h2, h3 { font-family: "Sora", system-ui, sans-serif; text-wrap: balance; margin: 0; }
+  .mono { font-family: "JetBrains Mono", ui-monospace, monospace; }
+  a { color: var(--accent); }
+
+  /* ---------- hero ---------- */
+  .eyebrow {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 12.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+  .eyebrow .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+  h1.title { font-size: clamp(34px, 6vw, 48px); font-weight: 700; letter-spacing: -0.01em; line-height: 1.05; }
+  .subtitle { margin-top: 16px; font-size: 17px; line-height: 1.55; color: var(--text-secondary); max-width: 62ch; }
+  .subtitle b { color: var(--text-primary); font-weight: 600; }
+  .meta-row {
+    margin-top: 22px; display: flex; gap: 18px; flex-wrap: wrap;
+    font-family: "JetBrains Mono", monospace; font-size: 12.5px; color: var(--text-muted);
+  }
+  .meta-row span b { color: var(--text-secondary); font-weight: 500; }
+
+  /* ---------- sections ---------- */
+  section { margin-top: 56px; }
+  .section-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 18px; }
+  .section-head .idx { font-family: "JetBrains Mono", monospace; color: var(--text-muted); font-size: 13px; }
+  .section-head h2 { font-size: 21px; font-weight: 600; }
+  .lede { color: var(--text-secondary); font-size: 15px; line-height: 1.6; max-width: 66ch; margin: 0 0 20px; }
+
+  /* ---------- card ---------- */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 28px;
+  }
+
+  /* ---------- demo ---------- */
+  .demo-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+  .field input[type="number"] {
+    width: 130px; background: var(--surface-2); border: 1px solid var(--border);
+    color: var(--text-primary); font-family: "JetBrains Mono", monospace; font-size: 16px;
+    border-radius: 8px; padding: 10px 12px; font-variant-numeric: tabular-nums;
+  }
+  .field input[type="number"]:focus { outline: 2px solid var(--accent-line); border-color: var(--accent); }
+  .plus-sign { font-family: "JetBrains Mono", monospace; font-size: 20px; color: var(--text-muted); padding-bottom: 10px; }
+
+  .depth-field { flex: 1; min-width: 220px; }
+  .depth-field .depth-label-row { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); }
+  .depth-field .depth-label-row b { color: var(--accent); font-family: "JetBrains Mono", monospace; font-weight: 600; }
+  input[type="range"] { width: 100%; accent-color: var(--accent); margin-top: 8px; }
+
+  .think-btn {
+    background: var(--accent); color: #0b0d14; border: none; border-radius: 8px;
+    font-family: "Sora", sans-serif; font-weight: 600; font-size: 15px;
+    padding: 12px 22px; cursor: pointer; height: 42px;
+  }
+  .think-btn:hover { filter: brightness(1.08); }
+  .think-btn:disabled { opacity: 0.5; cursor: default; }
+
+  .result-area { margin-top: 26px; min-height: 108px; display: flex; align-items: center; }
+  .thinking {
+    display: flex; align-items: center; gap: 14px;
+    font-family: "JetBrains Mono", monospace; color: var(--text-secondary); font-size: 14px;
+  }
+  .pulse-ring {
+    width: 34px; height: 34px; border-radius: 50%;
+    border: 2px solid var(--accent-line);
+    display: flex; align-items: center; justify-content: center;
+    position: relative; flex: none;
+  }
+  .pulse-ring::before {
+    content: ""; position: absolute; inset: -6px; border-radius: 50%;
+    border: 2px solid var(--accent); opacity: 0; animation: pulseOut 0.9s ease-out infinite;
+  }
+  @media (prefers-reduced-motion: reduce) { .pulse-ring::before { animation: none; } }
+  @keyframes pulseOut {
+    0% { transform: scale(0.6); opacity: 0.55; }
+    100% { transform: scale(1.5); opacity: 0; }
+  }
+  .pulse-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+
+  .answer-box { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+  .answer-figure {
+    font-family: "JetBrains Mono", monospace; font-size: 34px; font-weight: 600;
+    font-variant-numeric: tabular-nums; letter-spacing: 0.01em;
+  }
+  .answer-figure.good { color: var(--good); }
+  .answer-figure.bad { color: var(--bad); }
+  .answer-caption { font-size: 13px; color: var(--text-muted); }
+  .status-chip {
+    font-family: "JetBrains Mono", monospace; font-size: 12px; font-weight: 600;
+    padding: 4px 10px; border-radius: 999px; letter-spacing: 0.03em;
+  }
+  .status-chip.good { background: var(--good-soft); color: var(--good); }
+  .status-chip.bad { background: var(--bad-soft); color: var(--bad); }
+  .placeholder-note { color: var(--text-muted); font-size: 14px; }
+
+  /* ---------- chart ---------- */
+  .chart-card .card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; margin-bottom: 6px; }
+  .chart-card .card-head h3 { font-size: 15px; font-weight: 600; }
+  .chart-card .card-head p { margin: 4px 0 0; font-size: 13px; color: var(--text-muted); max-width: 44ch; }
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; font-family: "JetBrains Mono", monospace; font-size: 12px; color: var(--text-secondary); }
+  .legend .key { display: flex; align-items: center; gap: 6px; }
+  .legend .swatch { width: 12px; height: 2px; border-radius: 1px; }
+  .chart-wrap { overflow-x: auto; margin-top: 14px; }
+  svg.chart { width: 100%; height: auto; min-width: 520px; display: block; }
+  svg.chart text { fill: var(--text-muted); font-family: "JetBrains Mono", monospace; font-size: 11px; }
+  svg.chart .axis-line { stroke: var(--border); stroke-width: 1; }
+  svg.chart .gridline { stroke: var(--border-soft); stroke-width: 1; }
+  .tooltip {
+    position: absolute; pointer-events: none; background: var(--surface-2);
+    border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px;
+    font-family: "JetBrains Mono", monospace; font-size: 12px; color: var(--text-primary);
+    transform: translate(-50%, -110%); white-space: nowrap; opacity: 0; transition: opacity 0.1s;
+  }
+  .chart-shell { position: relative; }
+
+  /* ---------- architecture ---------- */
+  .arch-diagram { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; }
+  .arch-box {
+    background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px 16px; min-width: 120px; text-align: center;
+  }
+  .arch-box .name { font-family: "JetBrains Mono", monospace; font-size: 13px; font-weight: 600; color: var(--text-primary); }
+  .arch-box .desc { font-size: 11.5px; color: var(--text-muted); margin-top: 4px; }
+  .arch-box.core { border-color: var(--accent-line); background: var(--accent-soft); position: relative; }
+  .arch-box.core .name { color: var(--accent); }
+  .arch-loop {
+    font-family: "JetBrains Mono", monospace; font-size: 11px; color: var(--accent);
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+  }
+  .arch-arrow { color: var(--text-muted); font-size: 18px; }
+  .arch-note { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+  .arch-note code { background: var(--surface-2); padding: 1px 6px; border-radius: 4px; color: var(--accent); font-size: 12.5px; }
+
+  /* ---------- footer ---------- */
+  footer { margin-top: 70px; border-top: 1px solid var(--border); padding-top: 22px; }
+  footer p { font-size: 13px; color: var(--text-muted); line-height: 1.6; max-width: 66ch; }
+  footer .links { margin-top: 10px; font-family: "JetBrains Mono", monospace; font-size: 12.5px; display: flex; gap: 18px; flex-wrap: wrap; }
+
+  @media (max-width: 480px) {
+    .demo-row { flex-direction: column; align-items: stretch; }
+    .plus-sign { display: none; }
+    .answer-figure { font-size: 26px; }
+  }
+</style>
+
+<div class="wrap">
+
+  <div class="eyebrow"><span class="dot"></span>recurrent-depth transformer &middot; runs entirely in this tab</div>
+  <h1 class="title">webLTM</h1>
+  <p class="subtitle">
+    A 600&nbsp;KB model that answers by <b>looping a single block in latent space</b>
+    instead of writing out its reasoning. Turn the depth knob up and it thinks
+    longer &mdash; you'll never see a single token of that thinking, only the
+    loop counter ticking and the final digits landing. That's not a UI
+    choice: the architecture has no chain-of-thought channel to expose.
+  </p>
+  <div class="meta-row">
+    <span><b>153K</b> params</span>
+    <span><b>3</b> transformer blocks (prelude / core / coda)</span>
+    <span><b>597&nbsp;KB</b> weights</span>
+    <span>no WebGPU, no download &mdash; plain JS</span>
+  </div>
+
+  <section>
+    <div class="section-head"><span class="idx">01</span><h2>Give it a sum</h2></div>
+    <p class="lede">Two numbers up to 5 digits each. The model never sees an intermediate
+      carry, a scratchpad, or a reasoning token &mdash; only the input digits and, after
+      <span class="mono" style="color:var(--text-secondary)">r</span> loops, the output digits.</p>
+
+    <div class="card">
+      <div class="demo-row">
+        <div class="field">
+          <label for="opA">A</label>
+          <input id="opA" type="number" min="0" max="99999" value="4821" />
+        </div>
+        <div class="plus-sign">+</div>
+        <div class="field">
+          <label for="opB">B</label>
+          <input id="opB" type="number" min="0" max="99999" value="367" />
+        </div>
+        <div class="field depth-field">
+          <div class="depth-label-row"><span>thinking depth</span><b id="depthVal">8</b></div>
+          <input id="depthSlider" type="range" min="1" max="24" value="8" />
+        </div>
+        <button class="think-btn" id="thinkBtn">Think</button>
+      </div>
+
+      <div class="result-area" id="resultArea">
+        <p class="placeholder-note">Loading 153K trained parameters&hellip;</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head"><span class="idx">02</span><h2>Does more looping actually help?</h2></div>
+    <p class="lede">Exact-match accuracy on held-out problems, by loop count and by how many
+      digits the problem has. Trained only up to depth 8 (dashed) &mdash; past that the
+      model is extrapolating, and you can see exactly where it stops paying off.</p>
+
+    <div class="card chart-card">
+      <div class="card-head">
+        <div>
+          <h3>Accuracy vs. thinking depth</h3>
+          <p>Harder (longer) problems need more loops before they saturate;
+            easy ones peak almost immediately.</p>
+        </div>
+        <div class="legend" id="legend"></div>
+      </div>
+      <div class="chart-shell">
+        <div class="chart-wrap"><svg class="chart" id="chart" viewBox="0 0 720 320" preserveAspectRatio="xMinYMin meet"></svg></div>
+        <div class="tooltip" id="tooltip"></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head"><span class="idx">03</span><h2>How it's built</h2></div>
+    <div class="card">
+      <div class="arch-diagram">
+        <div class="arch-box"><div class="name">prelude</div><div class="desc">embed digits, run once</div></div>
+        <div class="arch-arrow">&rarr;</div>
+        <div class="arch-box core">
+          <div class="name">core</div>
+          <div class="desc">re-run r&times;, latent state only</div>
+        </div>
+        <div class="arch-loop">&#8635; &times;r</div>
+        <div class="arch-arrow">&rarr;</div>
+        <div class="arch-box"><div class="name">coda</div><div class="desc">read out digits, once</div></div>
+      </div>
+      <p class="arch-note">
+        The prelude embeds the input once. The <b style="color:var(--accent)">core</b>
+        block then re-reads its own previous state <code>r</code> times &mdash; the
+        original embedding is re-injected at every pass so the state doesn't drift as
+        <code>r</code> grows, the trick that lets one set of weights work at any test-time
+        depth. Only the coda's single pass is ever turned into logits. There is no
+        step in between where a token could leak out, because no step in between
+        produces tokens at all &mdash; the answer is predicted all at once, not
+        word-by-word.
+      </p>
+    </div>
+  </section>
+
+  <footer>
+    <p>
+      This is a hobby-scale replica of an idea, not of OpenAI's Astra: Astra's
+      "opaque recurrence" (per <a href="https://techcrunch.com/2026/09/03/openai-launches-astra-its-powerful-and-controversial-new-model/" target="_blank" rel="noopener">TechCrunch's reporting</a>)
+      is an undisclosed, frontier-scale system, and the controversy around it is
+      about chain-of-thought monitorability disappearing at that scale. webLTM is
+      153K parameters doing addition &mdash; small enough to read every line of
+      the loop, on purpose, since the whole point here is to make the mechanism
+      legible rather than opaque.
+    </p>
+    <div class="links">
+      <span class="mono">repo: webLTM (C:\work)</span>
+      <span class="mono">weights: web/weights.bin</span>
+      <span class="mono">train: train.py</span>
+    </div>
+  </footer>
+</div>
+
+<script src="model.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  var GRID = {"1": {"1": 1.0, "2": 1.0, "4": 1.0, "8": 1.0, "16": 0.97, "24": 0.7433}, "2": {"1": 0.8533, "2": 0.9233, "4": 0.93, "8": 0.9167, "16": 0.7867, "24": 0.62}, "3": {"1": 0.7467, "2": 0.8133, "4": 0.84, "8": 0.82, "16": 0.67, "24": 0.51}, "4": {"1": 0.6267, "2": 0.67, "4": 0.69, "8": 0.7033, "16": 0.55, "24": 0.29}, "5": {"1": 0.5567, "2": 0.5933, "4": 0.6233, "8": 0.61, "16": 0.4533, "24": 0.26}};
+  var R_VALUES = [1, 2, 4, 8, 16, 24];
+  var DIGIT_VALUES = [1, 2, 3, 4, 5];
+  var SEQ_COLORS = { 1: "var(--s1)", 2: "var(--s2)", 3: "var(--s3)", 4: "var(--s4)", 5: "var(--s5)" };
+  var SEQ_HEX = { 1: "#9ec5f4", 2: "#6da7ec", 3: "#3987e5", 4: "#256abf", 5: "#184f95" };
+
+  // ---------------- model loading ----------------
+  var model = null;
+  var depthSlider = document.getElementById("depthSlider");
+  var depthVal = document.getElementById("depthVal");
+  var thinkBtn = document.getElementById("thinkBtn");
+  var resultArea = document.getElementById("resultArea");
+  var opA = document.getElementById("opA");
+  var opB = document.getElementById("opB");
+
+  depthSlider.addEventListener("input", function () { depthVal.textContent = depthSlider.value; });
+
+  function b64ToBuffer(b64) {
+    var bin = atob(b64);
+    var buf = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+    return buf.buffer;
+  }
+
+  function loadWeightsBuffer() {
+    // plain binary works on any static host (e.g. GitHub Pages); the
+    // base64 .txt fallback is for hosts that only serve a fixed set of
+    // content-types (some artifact previews) and don't allow .bin.
+    return fetch("weights.bin").then(function (r) {
+      if (!r.ok) throw new Error("no weights.bin");
+      return r.arrayBuffer();
+    }).catch(function () {
+      return fetch("weights.b64.txt").then(function (r) { return r.text(); }).then(b64ToBuffer);
+    });
+  }
+
+  Promise.all([
+    fetch("manifest.json").then(function (r) { return r.json(); }),
+    loadWeightsBuffer()
+  ]).then(function (res) {
+    model = { manifest: res[0], buffer: res[1] };
+    resultArea.innerHTML = '<p class="placeholder-note">Ready. Pick two numbers and press Think.</p>';
+    thinkBtn.disabled = false;
+    runDemo(); // show an example result immediately, at rest
+  }).catch(function (err) {
+    resultArea.innerHTML = '<p class="placeholder-note">Could not load weights.bin / manifest.json &mdash; open this page from its own folder (not file://) or via the hosted demo.</p>';
+    console.error(err);
+  });
+  thinkBtn.disabled = true;
+
+  function clampOperand(v) {
+    v = Math.max(0, Math.min(99999, Math.floor(Number(v) || 0)));
+    return v;
+  }
+
+  function runDemo() {
+    if (!model) return;
+    var a = clampOperand(opA.value);
+    var b = clampOperand(opB.value);
+    var r = parseInt(depthSlider.value, 10);
+    var trueSum = a + b;
+
+    thinkBtn.disabled = true;
+    var tick = 0;
+    resultArea.innerHTML =
+      '<div class="thinking"><div class="pulse-ring"><div class="pulse-dot"></div></div>' +
+      '<span id="thinkLabel">looping&hellip; <span class="mono" id="tickCount">0</span> / ' + r + '</span></div>';
+    var tickCount = document.getElementById("tickCount");
+
+    var stepMs = r <= 8 ? 90 : 45;
+    var timer = setInterval(function () {
+      tick++;
+      if (tickCount) tickCount.textContent = String(Math.min(tick, r));
+      if (tick >= r) {
+        clearInterval(timer);
+        setTimeout(function () { reveal(a, b, r, trueSum); }, 120);
+      }
+    }, stepMs);
+  }
+
+  function reveal(a, b, r, trueSum) {
+    var ids = tokenizeProblem(model.manifest, a, b);
+    var out = runModel(model, ids, r);
+    var predStr = digitsToNumber(model.manifest, out.answerDigits) || "0";
+    var pred = parseInt(predStr, 10);
+    var correct = pred === trueSum;
+    resultArea.innerHTML =
+      '<div class="answer-box">' +
+      '<div><div class="answer-figure ' + (correct ? "good" : "bad") + '">' + pred + '</div>' +
+      '<div class="answer-caption">' + a + ' + ' + b + ' = ' + pred + ' &middot; loop depth ' + r + '</div></div>' +
+      '<div class="status-chip ' + (correct ? "good" : "bad") + '">' + (correct ? "CORRECT" : "true sum: " + trueSum) + '</div>' +
+      '</div>';
+    thinkBtn.disabled = false;
+  }
+
+  thinkBtn.addEventListener("click", runDemo);
+
+  // ---------------- chart ----------------
+  var svg = document.getElementById("chart");
+  var legendEl = document.getElementById("legend");
+  var tooltip = document.getElementById("tooltip");
+  var W = 720, H = 320;
+  var padL = 40, padR = 16, padT = 16, padB = 40;
+  var plotW = W - padL - padR, plotH = H - padT - padB;
+
+  function xPos(i) { return padL + (i / (R_VALUES.length - 1)) * plotW; }
+  function yPos(v) { return padT + (1 - v) * plotH; }
+
+  function svgEl(tag, attrs) {
+    var el = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for (var k in attrs) el.setAttribute(k, attrs[k]);
+    return el;
+  }
+
+  function buildChart() {
+    svg.innerHTML = "";
+    // gridlines + y labels (0, 25, 50, 75, 100%)
+    [0, 0.25, 0.5, 0.75, 1].forEach(function (v) {
+      var y = yPos(v);
+      svg.appendChild(svgEl("line", { x1: padL, x2: W - padR, y1: y, y2: y, class: "gridline" }));
+      var t = svgEl("text", { x: padL - 8, y: y + 4, "text-anchor": "end" });
+      t.textContent = Math.round(v * 100) + "%";
+      svg.appendChild(t);
+    });
+    // x axis
+    svg.appendChild(svgEl("line", { x1: padL, x2: W - padR, y1: H - padB, y2: H - padB, class: "axis-line" }));
+    R_VALUES.forEach(function (r, i) {
+      var x = xPos(i);
+      var t = svgEl("text", { x: x, y: H - padB + 18, "text-anchor": "middle" });
+      t.textContent = "r=" + r;
+      svg.appendChild(t);
+    });
+    // dashed marker at trained max depth (r=8, index 3)
+    var trainedX = xPos(R_VALUES.indexOf(8));
+    var trainLine = svgEl("line", {
+      x1: trainedX, x2: trainedX, y1: padT, y2: H - padB,
+      stroke: "var(--border)", "stroke-width": 1, "stroke-dasharray": "3,4"
+    });
+    svg.appendChild(trainLine);
+    var trainLabel = svgEl("text", { x: trainedX, y: padT - 4, "text-anchor": "middle" });
+    trainLabel.textContent = "trained \u2264 8";
+    svg.appendChild(trainLabel);
+
+    // lines + markers
+    var hitboxes = [];
+    DIGIT_VALUES.forEach(function (nd) {
+      var color = SEQ_HEX[nd];
+      var pts = R_VALUES.map(function (r, i) { return [xPos(i), yPos(GRID[nd][r])]; });
+      var d = pts.map(function (p, i) { return (i === 0 ? "M" : "L") + p[0].toFixed(1) + " " + p[1].toFixed(1); }).join(" ");
+      svg.appendChild(svgEl("path", { d: d, fill: "none", stroke: color, "stroke-width": 2, "stroke-linecap": "round", "stroke-linejoin": "round" }));
+      pts.forEach(function (p, i) {
+        svg.appendChild(svgEl("circle", { cx: p[0], cy: p[1], r: 5, fill: "var(--surface)", stroke: color, "stroke-width": 2 }));
+        hitboxes.push({ x: p[0], y: p[1], nd: nd, r: R_VALUES[i], val: GRID[nd][R_VALUES[i]], color: color });
+      });
+    });
+
+    // hover layer
+    var overlay = svgEl("rect", { x: padL, y: padT, width: plotW, height: plotH, fill: "transparent" });
+    svg.appendChild(overlay);
+    overlay.addEventListener("mousemove", function (evt) {
+      var rect = svg.getBoundingClientRect();
+      var scale = W / rect.width;
+      var mx = (evt.clientX - rect.left) * scale;
+      var my = (evt.clientY - rect.top) * scale;
+      var best = null, bestDist = Infinity;
+      hitboxes.forEach(function (h) {
+        var dist = Math.hypot(h.x - mx, h.y - my);
+        if (dist < bestDist) { bestDist = dist; best = h; }
+      });
+      if (best && bestDist < 30) {
+        tooltip.style.opacity = 1;
+        tooltip.style.left = (best.x / W) * rect.width + "px";
+        tooltip.style.top = (best.y / H) * rect.height + "px";
+        tooltip.innerHTML = best.nd + "-digit &middot; r=" + best.r + " &rarr; <b>" + Math.round(best.val * 100) + "%</b>";
+      } else {
+        tooltip.style.opacity = 0;
+      }
+    });
+    overlay.addEventListener("mouseleave", function () { tooltip.style.opacity = 0; });
+
+    // legend
+    legendEl.innerHTML = "";
+    DIGIT_VALUES.forEach(function (nd) {
+      var key = document.createElement("span");
+      key.className = "key";
+      key.innerHTML = '<span class="swatch" style="background:' + SEQ_HEX[nd] + '"></span>' + nd + (nd === 1 ? " digit" : " digits");
+      legendEl.appendChild(key);
+    });
+  }
+
+  buildChart();
+  window.addEventListener("resize", function () {});
+})();
+</script>

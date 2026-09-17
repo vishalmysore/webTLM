@@ -1,0 +1,36 @@
+{
+  "architecture": "webLTM-recurrent-depth",
+  "vocab": [
+    "0",
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9",
+    "+",
+    "=",
+    "ANS"
+  ],
+  "seq_len": 18,
+  "ans_start": 12,
+  "digits_per_operand": 5,
+  "d_model": 64,
+  "n_heads": 4,
+  "n_blocks": 3,
+  "block_order": [
+    "prelude",
+    "core",
+    "coda"
+  ],
+  "recurrent_block": "core",
+  "trained_recurrence_range": [
+    1,
+    8
+  ],
+  "task": "non-autoregressive multi-digit addition",
+  "params": 152909
+}

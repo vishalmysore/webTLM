@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Visible Thinking</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0b0d14;
+    --surface: #12151f;
+    --surface-2: #171b29;
+    --border: #262b3d;
+    --border-soft: #1b1f2d;
+    --text-primary: #e9eaf2;
+    --text-secondary: #9195ab;
+    --text-muted: #5d6178;
+    --accent: #fbbf46;              /* amber = visible / illuminated, vs webLTM's violet */
+    --accent-soft: rgba(251, 191, 70, 0.14);
+    --accent-line: rgba(251, 191, 70, 0.35);
+    --think: #7dd3fc;               /* the <think> block gets its own cool tone */
+    --think-soft: rgba(125, 211, 252, 0.1);
+    --good: #34d399;
+    --good-soft: rgba(52, 211, 153, 0.14);
+    --bad: #f87171;
+    --bad-soft: rgba(248, 113, 113, 0.14);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text-primary); font-family: "IBM Plex Sans", system-ui, sans-serif; padding: 0 20px; }
+  .wrap { max-width: 800px; margin: 0 auto; padding-block: 24px 80px; }
+  h1, h2, h3 { font-family: "Sora", system-ui, sans-serif; text-wrap: balance; margin: 0; }
+  .mono { font-family: "JetBrains Mono", ui-monospace, monospace; }
+  a { color: var(--accent); }
+
+  .crumbs { display: flex; gap: 8px; align-items: center; font-family: "JetBrains Mono", monospace; font-size: 12.5px; color: var(--text-muted); margin-bottom: 34px; flex-wrap: wrap; }
+  .crumbs a { color: var(--text-secondary); text-decoration: none; }
+  .crumbs a:hover { color: var(--accent); }
+
+  .eyebrow { font-family: "JetBrains Mono", monospace; font-size: 12.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); display: flex; align-items: center; gap: 8px; margin-bottom: 18px; }
+  .eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  h1.title { font-size: clamp(34px, 6vw, 48px); font-weight: 700; letter-spacing: -0.01em; line-height: 1.05; }
+  .subtitle { margin-top: 16px; font-size: 17px; line-height: 1.55; color: var(--text-secondary); max-width: 64ch; }
+  .subtitle b { color: var(--text-primary); font-weight: 600; }
+  .meta-row { margin-top: 22px; display: flex; gap: 18px; flex-wrap: wrap; font-family: "JetBrains Mono", monospace; font-size: 12.5px; color: var(--text-muted); }
+  .meta-row span b { color: var(--text-secondary); font-weight: 500; }
+
+  section { margin-top: 56px; }
+  .section-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 18px; }
+  .section-head .idx { font-family: "JetBrains Mono", monospace; color: var(--text-muted); font-size: 13px; }
+  .section-head h2 { font-size: 21px; font-weight: 600; }
+  .lede { color: var(--text-secondary); font-size: 15px; line-height: 1.6; max-width: 66ch; margin: 0 0 20px; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 28px; }
+
+  /* comparison table */
+  table.cmp { width: 100%; border-collapse: collapse; font-size: 14px; }
+  table.cmp th, table.cmp td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--border-soft); vertical-align: top; }
+  table.cmp th { font-family: "JetBrains Mono", monospace; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); font-weight: 500; }
+  table.cmp td.row-label { color: var(--text-secondary); font-size: 13px; white-space: nowrap; }
+  table.cmp td b { color: var(--text-primary); }
+  table.cmp .col-ltm { color: #b8a6ff; }
+  table.cmp .col-r1 { color: var(--accent); }
+  .cmp-wrap { overflow-x: auto; }
+
+  /* demo */
+  .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+  .field label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+  .field textarea {
+    width: 100%; background: var(--surface-2); border: 1px solid var(--border); color: var(--text-primary);
+    font-family: "JetBrains Mono", monospace; font-size: 14px; border-radius: 8px; padding: 10px 12px;
+    resize: vertical; min-height: 44px;
+  }
+  .field textarea:focus { outline: 2px solid var(--accent-line); border-color: var(--accent); }
+  .btn-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .btn {
+    background: var(--accent); color: #14110a; border: none; border-radius: 8px;
+    font-family: "Sora", sans-serif; font-weight: 600; font-size: 14.5px; padding: 11px 20px; cursor: pointer;
+  }
+  .btn:hover { filter: brightness(1.08); }
+  .btn:disabled { opacity: 0.45; cursor: default; }
+  .btn.secondary { background: var(--surface-2); color: var(--text-secondary); border: 1px solid var(--border); }
+
+  .gpu-warning {
+    background: var(--bad-soft); border: 1px solid rgba(248,113,113,0.3); border-radius: 10px;
+    padding: 14px 16px; font-size: 13.5px; color: var(--text-secondary); line-height: 1.6;
+  }
+  .gpu-warning b { color: var(--bad); }
+
+  .progress-wrap { margin-top: 18px; }
+  .progress-track { height: 8px; border-radius: 999px; background: var(--surface-2); overflow: hidden; border: 1px solid var(--border); }
+  .progress-fill { height: 100%; background: var(--accent); width: 0%; transition: width 0.2s ease; }
+  .progress-label { margin-top: 8px; font-family: "JetBrains Mono", monospace; font-size: 12px; color: var(--text-muted); }
+
+  .stream-pane {
+    margin-top: 22px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px;
+    padding: 18px; font-family: "JetBrains Mono", monospace; font-size: 13.5px; line-height: 1.7;
+    white-space: pre-wrap; word-break: break-word; min-height: 60px;
+  }
+  .stream-pane .think {
+    color: var(--think); background: var(--think-soft); display: block; padding: 10px 12px;
+    border-left: 2px solid var(--think); border-radius: 4px; margin-bottom: 10px; font-style: italic;
+  }
+  .stream-pane .answer { color: var(--text-primary); font-style: normal; }
+  .stream-pane .cursor { display: inline-block; width: 7px; height: 15px; background: var(--accent); vertical-align: text-bottom; animation: blink 1s step-end infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .stream-pane .cursor { animation: none; } }
+  .placeholder-note { color: var(--text-muted); font-size: 14px; }
+
+  .arch-note { font-size: 13px; color: var(--text-secondary); line-height: 1.6; margin-top: 14px; }
+  .arch-note code { background: var(--surface-2); padding: 1px 6px; border-radius: 4px; color: var(--accent); font-size: 12.5px; }
+
+  footer { margin-top: 70px; border-top: 1px solid var(--border); padding-top: 22px; }
+  footer p { font-size: 13px; color: var(--text-muted); line-height: 1.6; max-width: 66ch; }
+  footer .links { margin-top: 10px; font-family: "JetBrains Mono", monospace; font-size: 12.5px; display: flex; gap: 18px; flex-wrap: wrap; }
+
+  @media (max-width: 480px) {
+    .btn-row { flex-direction: column; align-items: stretch; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="crumbs"><a href="../">webTLM demos</a> <span>/</span> <a href="../webltm/">webLTM (opaque)</a> <span>/</span> <span style="color:var(--text-secondary)">Visible Thinking</span></div>
+
+  <div class="eyebrow"><span class="dot"></span>DeepSeek&#8209;R1&#8209;Distill&#8209;Qwen&#8209;7B &middot; full chain&#8209;of&#8209;thought, streamed live, in this tab</div>
+  <h1 class="title">Visible Thinking</h1>
+  <p class="subtitle">
+    The counterpart to <a href="../webltm/">webLTM</a>: a real reasoning model,
+    run entirely in-browser, that <b>never hides a token</b> of its reasoning.
+    DeepSeek-R1-distill models are trained to always emit a
+    <code class="mono">&lt;think&gt;...&lt;/think&gt;</code> block before
+    answering — every intermediate step streams to your screen exactly as
+    the model produces it, in plain English, not latent vectors you'd need
+    special tooling to inspect.
+  </p>
+  <div class="meta-row">
+    <span><b>~7B</b> params</span>
+    <span><b>~4.5GB</b> download (one-time, cached after)</span>
+    <span>WebLLM + WebGPU</span>
+    <span>reasoning is text, not a hidden loop</span>
+  </div>
+
+  <section>
+    <div class="section-head"><span class="idx">01</span><h2>Two ways to make a model "think more"</h2></div>
+    <p class="lede">Same underlying idea — more test-time compute before answering — with opposite transparency properties.</p>
+    <div class="card cmp-wrap">
+      <table class="cmp">
+        <thead><tr><th></th><th class="col-ltm">webLTM</th><th class="col-r1">this demo (R1-distill)</th></tr></thead>
+        <tbody>
+          <tr><td class="row-label">what "thinking" looks like to you</td><td><b>nothing</b> — a loop counter ticking, no content</td><td><b>everything</b> — full natural-language reasoning, streamed live</td></tr>
+          <tr><td class="row-label">where the reasoning lives</td><td>latent vectors inside a looped layer</td><td>ordinary output tokens, same channel as the answer</td></tr>
+          <tr><td class="row-label">"think more" means</td><td>more loop iterations, <code class="mono">r</code></td><td>a longer <code class="mono">&lt;think&gt;</code> block</td></tr>
+          <tr><td class="row-label">can an outside party audit it?</td><td>only by inspecting weights/activations directly</td><td>yes — read the transcript, same as reading its answer</td></tr>
+          <tr><td class="row-label">model size / first load</td><td>153K params &middot; 597KB</td><td>~7B params &middot; ~4.5GB</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="arch-note">Legibility isn't free: the model whose reasoning you can read is about
+      <b style="color:var(--text-primary)">7,700&times;</b> larger on disk than the one whose
+      reasoning you can't. That trade-off — not just "hidden vs. shown" — is most of what's
+      actually at stake in the opaque-recurrence debate.</p>
+  </section>
+
+  <section>
+    <div class="section-head"><span class="idx">02</span><h2>Watch it think</h2></div>
+    <p class="lede">Ask it the same kind of problem webLTM solves silently, and watch the reasoning arrive as text, live, token by token.</p>
+
+    <div class="card">
+      <div id="gpuGate">
+        <p class="placeholder-note">Checking for WebGPU&hellip;</p>
+      </div>
+
+      <div id="demoBody" hidden>
+        <div class="field">
+          <label for="prompt">Prompt</label>
+          <textarea id="prompt" rows="2">What is 48213 + 96757? Show your reasoning step by step, then give the final number.</textarea>
+        </div>
+        <div class="btn-row">
+          <button class="btn" id="loadBtn">Load model (~4.5GB, one-time)</button>
+          <button class="btn" id="askBtn" disabled>Ask</button>
+          <span class="mono placeholder-note" id="statusText"></span>
+        </div>
+
+        <div class="progress-wrap" id="progressWrap" hidden>
+          <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+          <div class="progress-label" id="progressLabel">starting&hellip;</div>
+        </div>
+
+        <div class="stream-pane" id="streamPane" hidden></div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p>
+      Same "add two numbers" task as <a href="../webltm/">webLTM</a>, deliberately, so the only
+      thing that differs between the two demos is where the extra computation goes and whether
+      you can see it. Neither demo is a claim about OpenAI's Astra specifically — Astra is
+      undisclosed and frontier-scale; these are both small enough (relatively — 4.5GB is "small"
+      only next to a frontier model) to run and inspect yourself.
+    </p>
+    <div class="links">
+      <span class="mono"><a href="../webltm/">&larr; webLTM (opaque)</a></span>
+      <span class="mono"><a href="../">all demos</a></span>
+      <span class="mono">model: DeepSeek-R1-Distill-Qwen-7B (MLC)</span>
+    </div>
+  </footer>
+</div>
+
+<script type="module">
+  const gpuGate = document.getElementById("gpuGate");
+  const demoBody = document.getElementById("demoBody");
+  const loadBtn = document.getElementById("loadBtn");
+  const askBtn = document.getElementById("askBtn");
+  const statusText = document.getElementById("statusText");
+  const progressWrap = document.getElementById("progressWrap");
+  const progressFill = document.getElementById("progressFill");
+  const progressLabel = document.getElementById("progressLabel");
+  const streamPane = document.getElementById("streamPane");
+  const promptEl = document.getElementById("prompt");
+
+  const MODEL_CANDIDATES = [
+    "DeepSeek-R1-Distill-Qwen-7B-q4f16_1-MLC",
+    "DeepSeek-R1-Distill-Qwen-7B-q4f32_1-MLC",
+  ];
+
+  let engine = null;
+
+  if (!("gpu" in navigator)) {
+    gpuGate.innerHTML =
+      '<div class="gpu-warning"><b>WebGPU not available.</b> This demo runs a real 7B model ' +
+      'client-side and needs it. Try latest Chrome or Edge on desktop (113+), with hardware ' +
+      'acceleration on. (webLTM next door needs none of this — that contrast is kind of the point.)</div>';
+  } else {
+    gpuGate.hidden = true;
+    demoBody.hidden = false;
+  }
+
+  function renderStream(raw) {
+    const thinkOpen = raw.indexOf("<think>");
+    const thinkClose = raw.indexOf("</think>");
+    let html = "";
+    if (thinkOpen === -1) {
+      html = escapeHtml(raw);
+    } else {
+      const before = raw.slice(0, thinkOpen);
+      if (thinkClose === -1) {
+        const thinking = raw.slice(thinkOpen + 7);
+        html = escapeHtml(before) + '<span class="think">' + escapeHtml(thinking) + '<span class="cursor"></span></span>';
+        streamPane.innerHTML = html;
+        return;
+      }
+      const thinking = raw.slice(thinkOpen + 7, thinkClose);
+      const after = raw.slice(thinkClose + 8);
+      html = escapeHtml(before) + '<span class="think">' + escapeHtml(thinking) + '</span>' +
+             '<span class="answer">' + escapeHtml(after) + '<span class="cursor"></span></span>';
+      streamPane.innerHTML = html;
+      return;
+    }
+    streamPane.innerHTML = html + '<span class="cursor"></span>';
+  }
+
+  function escapeHtml(s) {
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  loadBtn.addEventListener("click", async function () {
+    loadBtn.disabled = true;
+    progressWrap.hidden = false;
+    statusText.textContent = "";
+    let webllm;
+    try {
+      webllm = await import("https://esm.run/@mlc-ai/web-llm");
+    } catch (err) {
+      progressLabel.textContent = "Could not load the WebLLM library (network?). " + err.message;
+      loadBtn.disabled = false;
+      return;
+    }
+
+    const progressCb = (report) => {
+      const pct = Math.round((report.progress || 0) * 100);
+      progressFill.style.width = pct + "%";
+      progressLabel.textContent = (report.text || "loading") + "  (" + pct + "%)";
+    };
+
+    let lastErr = null;
+    for (const modelId of MODEL_CANDIDATES) {
+      try {
+        progressLabel.textContent = "initializing " + modelId + "…";
+        engine = await webllm.CreateMLCEngine(modelId, { initProgressCallback: progressCb });
+        lastErr = null;
+        break;
+      } catch (err) {
+        lastErr = err;
+        engine = null;
+      }
+    }
+
+    if (!engine) {
+      progressLabel.textContent = "Failed to load: " + (lastErr ? lastErr.message : "unknown error") +
+        " — your GPU may not have enough VRAM for a 7B model.";
+      loadBtn.disabled = false;
+      return;
+    }
+
+    progressLabel.textContent = "ready";
+    statusText.textContent = "model loaded";
+    loadBtn.textContent = "Loaded";
+    askBtn.disabled = false;
+  });
+
+  askBtn.addEventListener("click", async function () {
+    if (!engine) return;
+    askBtn.disabled = true;
+    streamPane.hidden = false;
+    streamPane.innerHTML = '<span class="cursor"></span>';
+    statusText.textContent = "thinking…";
+
+    try {
+      const chunks = await engine.chat.completions.create({
+        messages: [{ role: "user", content: promptEl.value }],
+        temperature: 0.6,
+        stream: true,
+      });
+      let full = "";
+      for await (const chunk of chunks) {
+        full += chunk.choices[0]?.delta?.content || "";
+        renderStream(full);
+      }
+      statusText.textContent = "done";
+    } catch (err) {
+      streamPane.innerHTML += "\n\n[error: " + escapeHtml(err.message) + "]";
+      statusText.textContent = "error";
+    } finally {
+      askBtn.disabled = false;
+    }
+  });
+</script>
+</body>
+</html>
