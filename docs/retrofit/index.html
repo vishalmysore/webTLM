@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Real Retrofit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0b0d14; --surface: #12151f; --surface-2: #171b29; --border: #262b3d; --border-soft: #1b1f2d;
+    --text-primary: #e9eaf2; --text-secondary: #9195ab; --text-muted: #5d6178;
+    --accent: #2dd4bf; --accent-soft: rgba(45, 212, 191, 0.14); --accent-line: rgba(45, 212, 191, 0.35);
+    --good: #34d399; --good-soft: rgba(52, 211, 153, 0.14);
+    --bad: #f87171; --bad-soft: rgba(248, 113, 113, 0.14);
+    --frozen: #5d6178; --trainable: #2dd4bf;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text-primary); font-family: "IBM Plex Sans", system-ui, sans-serif; padding: 0 20px; }
+  .wrap { max-width: 800px; margin: 0 auto; padding-block: 24px 80px; }
+  h1, h2, h3 { font-family: "Sora", system-ui, sans-serif; text-wrap: balance; margin: 0; }
+  .mono { font-family: "JetBrains Mono", ui-monospace, monospace; }
+  a { color: var(--accent); }
+
+  .crumbs { display: flex; gap: 8px; align-items: center; font-family: "JetBrains Mono", monospace; font-size: 12.5px; color: var(--text-muted); margin-bottom: 34px; flex-wrap: wrap; }
+  .crumbs a { color: var(--text-secondary); text-decoration: none; }
+  .crumbs a:hover { color: var(--accent); }
+
+  .eyebrow { font-family: "JetBrains Mono", monospace; font-size: 12.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); display: flex; align-items: center; gap: 8px; margin-bottom: 18px; }
+  .eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  h1.title { font-size: clamp(34px, 6vw, 48px); font-weight: 700; letter-spacing: -0.01em; line-height: 1.05; }
+  .subtitle { margin-top: 16px; font-size: 17px; line-height: 1.55; color: var(--text-secondary); max-width: 64ch; }
+  .subtitle b { color: var(--text-primary); font-weight: 600; }
+  .meta-row { margin-top: 22px; display: flex; gap: 18px; flex-wrap: wrap; font-family: "JetBrains Mono", monospace; font-size: 12.5px; color: var(--text-muted); }
+  .meta-row span b { color: var(--text-secondary); font-weight: 500; }
+
+  section { margin-top: 56px; }
+  .section-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 18px; }
+  .section-head .idx { font-family: "JetBrains Mono", monospace; color: var(--text-muted); font-size: 13px; }
+  .section-head h2 { font-size: 21px; font-weight: 600; }
+  .lede { color: var(--text-secondary); font-size: 15px; line-height: 1.6; max-width: 66ch; margin: 0 0 20px; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 28px; }
+
+  /* architecture strip */
+  .arch-strip { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-family: "JetBrains Mono", monospace; font-size: 12.5px; }
+  .arch-block { border-radius: 8px; padding: 10px 14px; text-align: center; border: 1px solid var(--border); }
+  .arch-block.frozen { background: var(--surface-2); color: var(--text-muted); }
+  .arch-block.trainable { background: var(--accent-soft); color: var(--accent); border-color: var(--accent-line); }
+  .arch-arrow { color: var(--text-muted); }
+  .arch-note { font-size: 13px; color: var(--text-secondary); line-height: 1.6; margin-top: 16px; }
+  .arch-note code { background: var(--surface-2); padding: 1px 6px; border-radius: 4px; color: var(--accent); font-size: 12.5px; }
+
+  table.cmp { width: 100%; border-collapse: collapse; font-size: 14px; }
+  table.cmp th, table.cmp td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--border-soft); vertical-align: top; }
+  table.cmp th { font-family: "JetBrains Mono", monospace; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); font-weight: 500; }
+  table.cmp td.row-label { color: var(--text-secondary); font-size: 13px; white-space: nowrap; }
+  table.cmp td b { color: var(--text-primary); }
+  .cmp-wrap { overflow-x: auto; }
+
+  .progression { display: flex; flex-direction: column; gap: 10px; }
+  .progression .step-row { display: flex; gap: 14px; font-size: 13.5px; line-height: 1.6; }
+  .progression .step-tag { font-family: "JetBrains Mono", monospace; font-size: 11.5px; color: var(--text-muted); white-space: nowrap; padding-top: 2px; min-width: 56px; }
+  .progression .step-sample { color: var(--text-secondary); font-family: "JetBrains Mono", monospace; font-size: 12.5px; }
+  .progression .step-sample b { color: var(--text-primary); font-weight: 500; }
+
+  .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+  .field label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+  .field textarea, .field input[type=text] {
+    width: 100%; background: var(--surface-2); border: 1px solid var(--border); color: var(--text-primary);
+    font-family: "JetBrains Mono", monospace; font-size: 14px; border-radius: 8px; padding: 10px 12px;
+    resize: vertical; min-height: 44px;
+  }
+  .field textarea:focus, .field input:focus { outline: 2px solid var(--accent-line); border-color: var(--accent); }
+  .slider-row { display: flex; align-items: center; gap: 12px; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--accent); }
+  .slider-row .val { font-family: "JetBrains Mono", monospace; font-size: 13px; color: var(--accent); min-width: 26px; text-align: right; }
+
+  .btn-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .btn {
+    background: var(--accent); color: #06231e; border: none; border-radius: 8px;
+    font-family: "Sora", sans-serif; font-weight: 600; font-size: 14.5px; padding: 11px 20px; cursor: pointer;
+  }
+  .btn:hover { filter: brightness(1.08); }
+  .btn:disabled { opacity: 0.45; cursor: default; }
+  .btn.secondary { background: var(--surface-2); color: var(--text-secondary); border: 1px solid var(--border); }
+
+  .progress-wrap { margin-top: 18px; }
+  .progress-track { height: 8px; border-radius: 999px; background: var(--surface-2); overflow: hidden; border: 1px solid var(--border); }
+  .progress-fill { height: 100%; background: var(--accent); width: 0%; transition: width 0.2s ease; }
+  .progress-label { margin-top: 8px; font-family: "JetBrains Mono", monospace; font-size: 12px; color: var(--text-muted); }
+
+  .stream-pane {
+    margin-top: 22px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px;
+    padding: 18px; font-family: "JetBrains Mono", monospace; font-size: 13.5px; line-height: 1.7;
+    white-space: pre-wrap; word-break: break-word; min-height: 60px;
+  }
+  .stream-pane .cursor { display: inline-block; width: 7px; height: 15px; background: var(--accent); vertical-align: text-bottom; animation: blink 1s step-end infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .stream-pane .cursor { animation: none; } }
+  .placeholder-note { color: var(--text-muted); font-size: 14px; }
+  .perf-note { margin-top: 10px; font-family: "JetBrains Mono", monospace; font-size: 12px; color: var(--text-muted); }
+
+  .warn-box {
+    background: var(--bad-soft); border: 1px solid rgba(248,113,113,0.3); border-radius: 10px;
+    padding: 14px 16px; font-size: 13.5px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 16px;
+  }
+  .warn-box b { color: var(--bad); }
+
+  footer { margin-top: 70px; border-top: 1px solid var(--border); padding-top: 22px; }
+  footer p { font-size: 13px; color: var(--text-muted); line-height: 1.6; max-width: 66ch; }
+  footer .links { margin-top: 10px; font-family: "JetBrains Mono", monospace; font-size: 12.5px; display: flex; gap: 18px; flex-wrap: wrap; }
+
+  @media (max-width: 480px) { .btn-row { flex-direction: column; align-items: stretch; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="crumbs"><a href="../">webTLM demos</a> <span>/</span> <a href="../webltm/">webLTM (opaque)</a> <span>/</span> <a href="../monitor/">Visible Thinking</a> <span>/</span> <span style="color:var(--text-secondary)">Real Retrofit</span></div>
+
+  <div class="eyebrow"><span class="dot"></span>SmolLM2&#8209;135M &middot; one real pretrained layer, looped, fine&#8209;tuned</div>
+  <h1 class="title">Same Trick, Real Language</h1>
+  <p class="subtitle">
+    webLTM proves the <i>mechanism</i> — a block that loops over its own latent
+    state with no chain-of-thought slot — on 153K parameters that only add
+    numbers. This demo proves the mechanism <b>retrofits onto an actual
+    pretrained language model</b>: take a real 30-layer transformer, freeze
+    29 of those layers, replace the 10 in the middle with one shared,
+    looped layer, and lightly fine-tune only that one layer on real English.
+  </p>
+  <div class="meta-row">
+    <span><b>102.65M</b> total params</span>
+    <span><b>3.54M</b> fine-tuned (3.4%)</span>
+    <span>base: HuggingFaceTB/SmolLM2-135M</span>
+    <span>trained on wikitext-2, 500 steps, CPU</span>
+  </div>
+
+  <section>
+    <div class="section-head"><span class="idx">01</span><h2>What actually got retrained</h2></div>
+    <p class="lede">Prelude and coda are the base model's own weights, byte-for-byte, run once each. The only thing that changed is one layer, looped.</p>
+    <div class="card">
+      <div class="arch-strip">
+        <div class="arch-block frozen">embed<br>(frozen)</div>
+        <span class="arch-arrow">&rarr;</span>
+        <div class="arch-block frozen">prelude<br>layers 0&ndash;9<br>(frozen)</div>
+        <span class="arch-arrow">&rarr;</span>
+        <div class="arch-block trainable">core<br>1 layer &times; r<br>(fine-tuned)</div>
+        <span class="arch-arrow">&rarr;</span>
+        <div class="arch-block frozen">coda<br>layers 20&ndash;29<br>(frozen)</div>
+        <span class="arch-arrow">&rarr;</span>
+        <div class="arch-block frozen">norm + head<br>(frozen, tied)</div>
+      </div>
+      <p class="arch-note">
+        The core starts as a deep-copy of the original layer 15, then gets looped
+        <code>r</code> times per forward pass and re-trained with <b>randomized depth</b>
+        (<code>r</code> sampled 1&ndash;12 every step) — the same trick webLTM uses, so one
+        set of weights has to work across a range of thinking budgets rather than
+        memorizing a single loop count. No KV-cache: every generated token recomputes
+        the whole sequence through prelude + core&times;r + coda, which is why this demo
+        is slow (see &sect;03) — that's real transformer compute, not a shortcut.
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head"><span class="idx">02</span><h2>What 500 CPU steps actually bought</h2></div>
+    <p class="lede">Only the core layer's 3.54M parameters have gradients; everything else stays exactly as SmolLM2 shipped it. Loss and a same-prompt sample, logged every 50 steps:</p>
+    <div class="card cmp-wrap">
+      <table class="cmp" style="margin-bottom: 22px;">
+        <thead><tr><th>step</th><th>train loss</th><th>val loss (r=2)</th><th>val loss (r=10)</th><th>val loss (r=12)</th></tr></thead>
+        <tbody>
+          <tr><td class="row-label mono">0</td><td>12.85</td><td>6.29</td><td>13.31</td><td>14.34</td></tr>
+          <tr><td class="row-label mono">100</td><td>5.44</td><td>4.82</td><td>5.88</td><td>6.30</td></tr>
+          <tr><td class="row-label mono">300</td><td>5.21</td><td>4.56</td><td>4.98</td><td>5.06</td></tr>
+          <tr><td class="row-label mono">499</td><td>4.85</td><td><b>4.42</b></td><td>4.88</td><td>5.05</td></tr>
+        </tbody>
+      </table>
+      <div class="progression">
+        <div class="step-row"><span class="step-tag mono">step 0</span><span class="step-sample">"<b>The history of the city began when</b>" — nothing generated yet, base weights un-retrofitted</span></div>
+        <div class="step-row"><span class="step-tag mono">step 100</span><span class="step-sample">"The history of the city began when <b>James of the Unitedistic 404-40-100013034 is a wall</b> of the the first"</span></div>
+        <div class="step-row"><span class="step-tag mono">step 300</span><span class="step-sample">"The history of the city began when <b>the first public or public property of the city</b> and the city was to be the city"</span></div>
+        <div class="step-row"><span class="step-tag mono">step 499</span><span class="step-sample">"The history of the city began when <b>the area was a planned " 33st " and a city " block</b> in the square and in 1800 it was built"</span></div>
+      </div>
+      <p class="arch-note">Real words, real (if shaky) English syntax, by the end — capitalization, punctuation, plausible nouns for "history of a city" (planned, block, square, built, 1800). Not fluent. 500 steps on a CPU, fine-tuning 3.4% of the parameters, was never going to produce a chatbot.</p>
+    </div>
+    <p class="arch-note" style="margin-top:16px;">
+      ❗ <b style="color:var(--text-primary)">One honest miss, stated plainly:</b> in webLTM's original addition task, more
+      loop iterations clearly helped on harder problems. Here they don't —
+      held-out loss is <i>lowest</i> at r=2 and gets steadily worse through r=10 and
+      r=12, the opposite of the finding this whole project set out to demonstrate.
+      The likely reason: 500 steps fine-tuning only one layer isn't enough to teach
+      it to do useful new work on iterations 3&ndash;12 — it mostly learned to be a
+      good single pass and a mediocre one when forced to loop further. A real budget
+      (more steps, more of the stack unfrozen) would very plausibly close this gap;
+      this run didn't have one. The architecture is real. The result training bought
+      in 26 minutes on a CPU is a starting point, not a finished model.
+    </p>
+  </section>
+
+  <section>
+    <div class="section-head"><span class="idx">03</span><h2>Run it yourself</h2></div>
+    <p class="lede">The model and tokenizer load from Hugging Face and run entirely in this tab via onnxruntime-web (WASM, no GPU needed) — set how many times the core layer loops, and watch it generate.</p>
+
+    <div class="card">
+      <div class="warn-box">
+        <b>Slow by design.</b> No KV-cache means every token recomputes the full
+        sequence through ~20&ndash;32 transformer-layer passes, in WASM, single-threaded
+        (GitHub Pages doesn't enable the cross-origin isolation multi-threading
+        needs). Expect several seconds per token, and a ~350MB one-time model
+        download. That cost — and the honest quality miss above — is the real
+        price of "real" versus webLTM's 597KB toy next door.
+      </div>
+
+      <div class="field">
+        <label for="prompt">Prompt</label>
+        <textarea id="prompt" rows="2">The history of the city began when</textarea>
+      </div>
+
+      <div class="field">
+        <label for="rSlider">Loop count (r) — trained on r = 1&ndash;12</label>
+        <div class="slider-row">
+          <input type="range" id="rSlider" min="1" max="12" value="6" />
+          <span class="val mono" id="rVal">6</span>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn" id="loadBtn">Load model (~350MB, one-time)</button>
+        <button class="btn" id="genBtn" disabled>Generate</button>
+        <button class="btn secondary" id="stopBtn" disabled>Stop</button>
+        <span class="mono placeholder-note" id="statusText"></span>
+      </div>
+
+      <div class="progress-wrap" id="progressWrap" hidden>
+        <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="progress-label" id="progressLabel">starting&hellip;</div>
+      </div>
+
+      <div class="stream-pane" id="streamPane" hidden></div>
+      <div class="perf-note" id="perfNote"></div>
+    </div>
+  </section>
+
+  <footer>
+    <p>
+      The point isn't that this particular checkpoint writes good prose — with
+      3.4% of a 135M-parameter model fine-tuned for 26 minutes on a CPU, it
+      structurally can't. The point is that the prelude/core/coda recurrent-depth
+      pattern — the thing "opaque recurrence" is actually describing — bolts onto
+      a real pretrained transformer's own layers with no architecture surgery
+      beyond picking a split point, and the loop still has no output head, same
+      as in the 153K-parameter toy. Scale the training budget and unfreeze more of
+      the stack, and this is the same mechanism a frontier lab would use, honest
+      training-budget caveats and all.
+    </p>
+    <div class="links">
+      <span class="mono"><a href="../webltm/">&larr; webLTM (opaque, toy)</a></span>
+      <span class="mono"><a href="../monitor/">Visible Thinking (7B, transparent)</a></span>
+      <span class="mono"><a href="../">all demos</a></span>
+      <span class="mono"><a href="https://huggingface.co/VishalMysore/webLTM">weights on HF</a></span>
+    </div>
+  </footer>
+</div>
+
+<script type="module">
+  import { loadLibraries, loadModel, generate, getMeta } from "./model.js";
+
+  const loadBtn = document.getElementById("loadBtn");
+  const genBtn = document.getElementById("genBtn");
+  const stopBtn = document.getElementById("stopBtn");
+  const statusText = document.getElementById("statusText");
+  const progressWrap = document.getElementById("progressWrap");
+  const progressFill = document.getElementById("progressFill");
+  const progressLabel = document.getElementById("progressLabel");
+  const streamPane = document.getElementById("streamPane");
+  const perfNote = document.getElementById("perfNote");
+  const promptEl = document.getElementById("prompt");
+  const rSlider = document.getElementById("rSlider");
+  const rVal = document.getElementById("rVal");
+
+  rSlider.addEventListener("input", () => { rVal.textContent = rSlider.value; });
+
+  let stopRequested = false;
+  let modelReady = false;
+
+  loadBtn.addEventListener("click", async () => {
+    loadBtn.disabled = true;
+    progressWrap.hidden = false;
+    try {
+      await loadLibraries((s) => { progressLabel.textContent = s; });
+      await loadModel(
+        (s) => { progressLabel.textContent = s; },
+        (pct) => { progressFill.style.width = pct + "%"; }
+      );
+      modelReady = true;
+      loadBtn.textContent = "Loaded";
+      statusText.textContent = "model ready";
+      genBtn.disabled = false;
+    } catch (err) {
+      progressLabel.textContent = "failed: " + err.message;
+      loadBtn.disabled = false;
+    }
+  });
+
+  genBtn.addEventListener("click", async () => {
+    if (!modelReady) return;
+    stopRequested = false;
+    genBtn.disabled = true;
+    stopBtn.disabled = false;
+    streamPane.hidden = false;
+    streamPane.innerHTML = '<span class="cursor"></span>';
+    statusText.textContent = "generating…";
+
+    const r = parseInt(rSlider.value, 10);
+    try {
+      for await (const { text, tokenMs, step } of generate(promptEl.value, { r, maxNewTokens: 24 })) {
+        streamPane.innerHTML = escapeHtml(text) + '<span class="cursor"></span>';
+        perfNote.textContent = `token ${step + 1} · r=${r} · ${tokenMs.toFixed(0)}ms this step`;
+        if (stopRequested) break;
+        await new Promise((res) => setTimeout(res, 0)); // yield to UI
+      }
+      statusText.textContent = stopRequested ? "stopped" : "done";
+    } catch (err) {
+      streamPane.innerHTML += "\n\n[error: " + escapeHtml(err.message) + "]";
+      statusText.textContent = "error";
+    } finally {
+      genBtn.disabled = false;
+      stopBtn.disabled = true;
+    }
+  });
+
+  stopBtn.addEventListener("click", () => { stopRequested = true; });
+
+  function escapeHtml(s) {
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+</script>
+</body>
+</html>

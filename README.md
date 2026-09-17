@@ -18,11 +18,12 @@ different question: not *"can a small model run in the browser,"* but
 representation at all."*
 
 **Live demos:** [vishalmysore.github.io/webTLM](https://vishalmysore.github.io/webTLM/)
-— the webLTM demo above, plus a **comparison demo** ("Visible Thinking")
-running a real reasoning model (DeepSeek-R1-Distill-Qwen-7B via WebLLM)
-whose full chain-of-thought streams to the screen, unhidden, as the
-opposite case study. Same task, opposite transparency properties, back to
-back.
+— the webLTM demo above, a **comparison demo** ("Visible Thinking") running
+a real reasoning model (DeepSeek-R1-Distill-Qwen-7B via WebLLM) whose full
+chain-of-thought streams to the screen, unhidden, as the opposite case
+study, and a third demo ("Real Retrofit") that bolts the same
+prelude/core/coda mechanism onto an actual pretrained language model
+(SmolLM2-135M) instead of a from-scratch toy. Same mechanism, three angles.
 **Repo:** [github.com/vishalmysore/webTLM](https://github.com/vishalmysore/webTLM)
 **Weights:** [huggingface.co/VishalMysore/webLTM](https://huggingface.co/VishalMysore/webLTM)
 (`model.safetensors` + `config.json` + a standalone `modeling_webltm.py` —
@@ -119,6 +120,62 @@ a loop over latent state rather than in emitted tokens. Building it at a
 scale small enough to read every line was the point — the opposite move
 from "opaque," on purpose.
 
+## The retrofit demo ("Real Retrofit")
+
+`docs/retrofit/` answers the obvious objection to webLTM: *"sure, but that's
+153K parameters that add numbers — does this mechanism actually work on a
+real language model?"* It retrofits the same prelude/core/coda pattern onto
+[HuggingFaceTB/SmolLM2-135M](https://huggingface.co/HuggingFaceTB/SmolLM2-135M),
+a real 30-layer pretrained Llama-architecture model:
+
+- layers 0–9 (**prelude**) and the last 10 layers (**coda**) are the base
+  model's own weights, frozen, run once each, exactly as SmolLM2 shipped;
+- one layer (a deep-copy of the original layer 15) becomes the **core**,
+  looped `r` times per forward pass — the only part with gradients;
+- fine-tuned for 500 steps on CPU, batch 8, sequence length 128, on
+  [wikitext-2-raw-v1](https://huggingface.co/datasets/Salesforce/wikitext),
+  with `r` sampled uniformly from 1–12 every step (same randomized-depth
+  trick as webLTM);
+- **3.54M of the model's 102.65M parameters (3.4%) were ever updated.**
+
+Training loss went from 12.85 to 4.85 in ~26 minutes; held-out generations
+went from `"The history of the city began when"` (nothing, base weights) to
+`"...the area was a planned " 33st " and a city " block in the square and
+in 1800 it was built"` — real English syntax and plausible vocabulary, not
+fluent prose. Stated plainly, one finding did **not** replicate: unlike
+webLTM's addition task, held-out loss here is *lowest* at `r=2` and gets
+worse through `r=10`/`r=12` — 500 steps fine-tuning one layer wasn't enough
+budget to teach it to make good use of the deeper loops it was trained
+across. Full loss table and sample progression in `docs/retrofit/index.html`.
+
+No KV-cache (same reasoning as webLTM: the same core-layer module gets
+called `r` times per forward pass, which would corrupt a cache keyed by a
+fixed `layer_idx`), so every generated token recomputes the full sequence —
+this is inherently a research/demo checkpoint, not a chatbot, and the demo
+says so.
+
+**Export:** `retrofit/export_onnx.py` splits the fine-tuned wrapper into
+three ONNX graphs — `trunk_pre.onnx` (embed output → after prelude),
+`core.onnx` (one layer, called `r` times by the browser's JS loop —
+mirrors webLTM's own JS-orchestrated loop, just delegating the matmuls to
+onnxruntime-web/WASM), and `trunk_post.onnx` (after coda + final norm) —
+plus a raw `embed_fp16.bin` (the tied embedding/lm_head weight, used
+directly by JS for the embedding gather and the final logits projection,
+so that tied 28M-parameter matrix is never duplicated inside an ONNX
+graph) and a precomputed `rope_table.json` (RoPE cos/sin for positions
+0–255, since RoPE isn't retraced into the graphs — the browser just slices
+rows). `retrofit/verify_onnx.py` confirms the ONNX pipeline's output
+matches the PyTorch reference forward pass exactly (max abs diff ≈ 7e-5,
+float32 rounding noise).
+
+Because `trunk_pre.onnx` and `trunk_post.onnx` are ~142MB each — over
+GitHub's 100MB hard per-file push limit — the `onnx_export/` assets are
+**not** committed to this repo; they're pushed to the `onnx/` folder of the
+[HF weights repo](https://huggingface.co/VishalMysore/webLTM) instead, and
+`docs/retrofit/model.js` fetches them from there at runtime (same pattern
+`@huggingface/transformers` and `onnxruntime-web` use generally). See
+`retrofit/README_UPLOAD.md` for the upload command.
+
 ## Repo layout
 
 ```
@@ -144,11 +201,24 @@ webLTM/
 │   ├── modeling_webltm.py
 │   ├── config.json
 │   └── model.safetensors
+├── retrofit/                     # SmolLM2-135M recurrent-depth retrofit (training + export)
+│   ├── model.py                  # RecurrentDepthWrapper: prelude/core/coda split of a real Llama-arch model
+│   ├── prepare_data.py           # tokenizes wikitext-2-raw-v1 into fixed-length chunks (data.pt)
+│   ├── train_retrofit.py         # fine-tunes only the core layer, random depth r∈[1,12], 500 steps CPU
+│   ├── export_onnx.py            # exports trunk_pre/core/trunk_post ONNX graphs + fp16 embed + RoPE table
+│   ├── quantize_fp16.py          # (best-effort) fp16 weight conversion for the ONNX graphs
+│   ├── verify_onnx.py            # confirms ONNX pipeline output matches the PyTorch reference exactly
+│   ├── core_final.pt             # fine-tuned core layer weights (14MB)
+│   └── onnx_export/              # trunk_pre.onnx, core.onnx, trunk_post.onnx, embed_fp16.bin,
+│                                  # rope_table.json, meta.json — pushed to the HF repo's onnx/ folder,
+│                                  # NOT committed to git (141MB+141MB single files exceed GitHub's limit)
 └── docs/                        # what GitHub Pages actually serves (vishalmysore.github.io/webTLM)
-    ├── index.html                # hub linking both demos
+    ├── index.html                # hub linking all three demos
     ├── webltm/                   # copy of web/ — the opaque-recurrence demo
-    └── monitor/                  # "Visible Thinking" — DeepSeek-R1-Distill-Qwen-7B via WebLLM,
-                                   # full chain-of-thought streamed live, as the contrasting case
+    ├── monitor/                  # "Visible Thinking" — DeepSeek-R1-Distill-Qwen-7B via WebLLM,
+    │                              # full chain-of-thought streamed live, as the contrasting case
+    └── retrofit/                 # "Real Retrofit" — SmolLM2-135M recurrent-depth retrofit,
+                                   # runs client-side via onnxruntime-web (WASM), weights fetched from HF
 ```
 
 ## Running it
@@ -173,9 +243,10 @@ cd web && python3 -m http.server 8000
 # open http://localhost:8000
 ```
 
-**Deploy:** GitHub Pages is already configured to serve `docs/` on the
-`main` branch (Settings → Pages → Source → Deploy from a branch → `main` /
-`docs`) — live at [vishalmysore.github.io/webTLM](https://vishalmysore.github.io/webTLM/).
+**Deploy:** `.github/workflows/deploy-pages.yml` builds and deploys `docs/`
+via GitHub Actions (Settings → Pages → Source → GitHub Actions) on every
+push that touches `docs/**`, or on manual `workflow_dispatch` — live at
+[vishalmysore.github.io/webTLM](https://vishalmysore.github.io/webTLM/).
 `docs/webltm/` is a synced copy of `web/`; if you change `web/`, copy it
 back into `docs/webltm/` before pushing (both are plain static files, no
 build step either way).

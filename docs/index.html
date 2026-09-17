@@ -13,6 +13,7 @@
     --text-primary: #e9eaf2; --text-secondary: #9195ab; --text-muted: #5d6178;
     --violet: #8a6bff; --violet-soft: rgba(138,107,255,0.14);
     --amber: #fbbf46; --amber-soft: rgba(251,191,70,0.14);
+    --teal: #2dd4bf; --teal-soft: rgba(45,212,191,0.14);
   }
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--text-primary); font-family: "IBM Plex Sans", system-ui, sans-serif; padding: 0 20px; }
@@ -22,7 +23,8 @@
   a { color: inherit; }
   h1.title { font-size: clamp(30px, 6vw, 42px); font-weight: 700; letter-spacing: -0.01em; }
   .subtitle { margin-top: 14px; font-size: 16px; line-height: 1.6; color: var(--text-secondary); max-width: 62ch; }
-  .cards { margin-top: 40px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .cards { margin-top: 40px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  @media (max-width: 900px) { .cards { grid-template-columns: 1fr 1fr; } }
   @media (max-width: 620px) { .cards { grid-template-columns: 1fr; } }
   .card {
     display: block; text-decoration: none; background: var(--surface); border: 1px solid var(--border);
@@ -31,12 +33,14 @@
   .card:hover { border-color: var(--accent-hover, var(--border)); }
   .card.violet:hover { border-color: var(--violet); }
   .card.amber:hover { border-color: var(--amber); }
+  .card.teal:hover { border-color: var(--teal); }
   .card .tag {
     display: inline-block; font-family: "JetBrains Mono", monospace; font-size: 11px; text-transform: uppercase;
     letter-spacing: 0.05em; padding: 3px 9px; border-radius: 999px; margin-bottom: 14px;
   }
   .card.violet .tag { background: var(--violet-soft); color: var(--violet); }
   .card.amber .tag { background: var(--amber-soft); color: var(--amber); }
+  .card.teal .tag { background: var(--teal-soft); color: var(--teal); }
   .card h2 { font-size: 20px; font-weight: 600; color: var(--text-primary); }
   .card p { margin: 10px 0 0; font-size: 14px; color: var(--text-secondary); line-height: 1.55; }
   .card .meta { margin-top: 16px; font-family: "JetBrains Mono", monospace; font-size: 12px; color: var(--text-muted); }
@@ -46,12 +50,13 @@
 </head>
 <body>
 <div class="wrap">
-  <h1 class="title">Two ways to make a model think longer</h1>
+  <h1 class="title">Three ways to make a model think longer</h1>
   <p class="subtitle">
     Same underlying question — what happens when you give a model more
-    test-time compute — answered by two small, from-scratch, in-browser
-    demos with opposite transparency properties. One hides every trace of
-    its reasoning by construction; the other can't hide anything if it tried.
+    test-time compute — answered by three small, in-browser demos. Two are
+    opposite transparency choices on a from-scratch toy; the third retrofits
+    the same opaque-loop mechanism onto a real pretrained language model, to
+    show it isn't just a toy-scale trick.
   </p>
 
   <div class="cards">
@@ -71,6 +76,15 @@
         reasoning token streams to the screen in plain English before the
         final answer — the opposite design choice, same class of problem.</p>
       <div class="meta">~7B params &middot; ~4.5GB &middot; same-flavor prompt</div>
+    </a>
+    <a class="card teal" href="retrofit/">
+      <span class="tag">real pretrained model</span>
+      <h2>Real Retrofit</h2>
+      <p>Same prelude/core/coda pattern, retrofitted onto SmolLM2-135M: 29 of
+        30 layers frozen exactly as shipped, one shared layer fine-tuned and
+        looped. Proof the mechanism isn't toy-scale-only — with an honestly
+        reported training-budget limitation.</p>
+      <div class="meta">102.65M params &middot; 3.4% fine-tuned &middot; wikitext-2</div>
     </a>
   </div>
 

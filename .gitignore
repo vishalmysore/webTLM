@@ -1,2 +1,5 @@
 __pycache__/
 *.pyc
+retrofit/onnx_export/
+retrofit/data.pt
+retrofit/core_checkpoint.pt
