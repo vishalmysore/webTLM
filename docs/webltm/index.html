@@ -121,11 +121,68 @@
   .think-btn:hover { filter: brightness(1.08); }
   .think-btn:disabled { opacity: 0.5; cursor: default; }
 
-  .result-area { margin-top: 26px; min-height: 108px; display: flex; align-items: center; }
+  /* ---------- presets ---------- */
+  .presets-row {
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-soft);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .preset-label {
+    font-size: 11.5px;
+    color: var(--text-muted);
+    font-family: "JetBrains Mono", monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .preset-chips {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .preset-chip {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 12px;
+    color: var(--text-primary);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 12.5px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.15s ease;
+  }
+  .preset-chip:hover {
+    border-color: var(--accent);
+    background: var(--surface);
+    transform: translateY(-1px);
+  }
+  .preset-chip .chip-badge {
+    font-size: 10px;
+    text-transform: uppercase;
+    padding: 2px 6px;
+    border-radius: 4px;
+    letter-spacing: 0.04em;
+    font-weight: 600;
+  }
+  .chip-badge.red { background: rgba(248, 113, 113, 0.16); color: #f87171; }
+  .chip-badge.amber { background: rgba(251, 191, 70, 0.16); color: #fbbf46; }
+  .chip-badge.violet { background: rgba(138, 107, 255, 0.16); color: #a78bfa; }
+  .chip-badge.green { background: rgba(52, 211, 153, 0.16); color: #34d399; }
+
+  .result-area { margin-top: 24px; min-height: 108px; display: flex; flex-direction: column; align-items: stretch; gap: 18px; }
   .thinking {
     display: flex; align-items: center; gap: 14px;
     font-family: "JetBrains Mono", monospace; color: var(--text-secondary); font-size: 14px;
   }
+  .thinking-meta { display: flex; flex-direction: column; gap: 4px; }
+  .live-probe-note { font-size: 12px; color: var(--text-muted); }
+  .live-probe-note .highlight-probe { color: var(--accent); font-weight: 600; }
   .pulse-ring {
     width: 34px; height: 34px; border-radius: 50%;
     border: 2px solid var(--accent-line);
@@ -158,6 +215,205 @@
   .status-chip.good { background: var(--good-soft); color: var(--good); }
   .status-chip.bad { background: var(--bad-soft); color: var(--bad); }
   .placeholder-note { color: var(--text-muted); font-size: 14px; }
+
+  /* ---------- trajectory & intermediate readout ---------- */
+  .trajectory-card {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    width: 100%;
+  }
+  .trajectory-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 4px;
+  }
+  .traj-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .probe-badge {
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 3px 8px;
+    border-radius: 6px;
+    border: 1px solid var(--accent-line);
+  }
+  .trajectory-head h4 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  .traj-legend {
+    display: flex;
+    gap: 14px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11.5px;
+    color: var(--text-muted);
+  }
+  .traj-leg-item { display: flex; align-items: center; gap: 5px; }
+  .dot-diff { width: 8px; height: 8px; border-radius: 50%; background: #fbbf46; }
+  .dot-match { width: 8px; height: 8px; border-radius: 50%; background: var(--good); }
+  .traj-desc {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin: 6px 0 16px;
+  }
+  .steps-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 320px;
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+  .steps-list::-webkit-scrollbar { width: 6px; }
+  .steps-list::-webkit-scrollbar-track { background: var(--surface); border-radius: 3px; }
+  .steps-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  .steps-list::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+  .step-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    font-size: 13px;
+    transition: background 0.15s;
+  }
+  .step-row.is-final {
+    border-color: var(--accent-line);
+    background: rgba(138, 107, 255, 0.05);
+  }
+  .step-row.is-solved {
+    border-color: rgba(52, 211, 153, 0.35);
+  }
+  .step-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 195px;
+  }
+  .step-badge {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  .step-status-icon {
+    font-size: 11px;
+    font-family: "JetBrains Mono", monospace;
+  }
+  .step-status-icon.match { color: var(--good); font-weight: 600; }
+  .step-status-icon.pending { color: var(--text-muted); }
+
+  .step-visual {
+    display: flex;
+    gap: 4px;
+    letter-spacing: 0.1em;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .digit-char {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 24px;
+    border-radius: 4px;
+    background: var(--surface-2);
+    color: var(--text-secondary);
+    transition: all 0.2s ease;
+  }
+  .digit-char.dimmed-zero {
+    opacity: 0.22;
+    color: var(--text-muted);
+  }
+  .digit-char.diff {
+    background: rgba(251, 191, 70, 0.25);
+    color: #fbbf46;
+    font-weight: 700;
+    box-shadow: 0 0 0 1px rgba(251, 191, 70, 0.6), 0 0 6px rgba(251, 191, 70, 0.25);
+    transform: scale(1.06);
+  }
+  .step-row.is-solved .digit-char {
+    color: var(--good);
+  }
+  .step-row.is-solved .digit-char.diff {
+    background: rgba(52, 211, 153, 0.25);
+    color: var(--good);
+    box-shadow: 0 0 0 1px rgba(52, 211, 153, 0.6), 0 0 6px rgba(52, 211, 153, 0.25);
+  }
+  .step-num-val {
+    font-size: 13px;
+    color: var(--text-primary);
+    min-width: 80px;
+  }
+
+  .steps-column-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 6px 12px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-bottom: 1px solid var(--border-soft);
+    margin-bottom: 4px;
+  }
+  .step-meta-hdr { min-width: 195px; }
+  .step-visual-hdr { display: flex; gap: 4px; }
+  .step-visual-hdr span { width: 20px; text-align: center; font-size: 10px; color: var(--accent); opacity: 0.8; }
+  .step-val-hdr { min-width: 80px; }
+  .step-note-hdr { flex: 1; }
+
+  .carry-action-badge {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .carry-action-badge.initial {
+    background: rgba(145, 149, 171, 0.1);
+    color: var(--text-muted);
+    border: 1px solid rgba(145, 149, 171, 0.2);
+  }
+  .carry-action-badge.propagating {
+    background: rgba(251, 191, 70, 0.16);
+    color: #fbbf46;
+    border: 1px solid rgba(251, 191, 70, 0.4);
+    font-weight: 600;
+  }
+  .carry-action-badge.solved {
+    background: rgba(52, 211, 153, 0.16);
+    color: var(--good);
+    border: 1px solid rgba(52, 211, 153, 0.4);
+    font-weight: 600;
+  }
+  .carry-action-badge.stable {
+    background: transparent;
+    color: var(--text-muted);
+    opacity: 0.6;
+  }
 
   /* ---------- chart ---------- */
   .chart-card .card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; margin-bottom: 6px; }
@@ -253,6 +509,28 @@
           <input id="depthSlider" type="range" min="1" max="24" value="8" />
         </div>
         <button class="think-btn" id="thinkBtn">Think</button>
+      </div>
+
+      <div class="presets-row">
+        <span class="preset-label">Carry Presets:</span>
+        <div class="preset-chips">
+          <button type="button" class="preset-chip" data-a="4999" data-b="1" data-r="4" title="Watch 5990 in Loop 1 cascade into 5000 in Loop 2 as carries ripple across 3 positions">
+            <span class="chip-badge red">Cascade</span>
+            <b>4999 + 1 = 5000</b>
+          </button>
+          <button type="button" class="preset-chip" data-a="19" data-b="83" data-r="4" title="Watch 192 in Loop 1 propagate tens carry into 102 in Loop 2">
+            <span class="chip-badge amber">Tens &rarr; 100s</span>
+            <b>19 + 83 = 102</b>
+          </button>
+          <button type="button" class="preset-chip" data-a="4821" data-b="367" data-r="8" title="Needs 3 loops to resolve the carry in the tens column (5288 -> 5188)">
+            <span class="chip-badge violet">Deep Carry (Loop 3)</span>
+            <b>4821 + 367 = 5188</b>
+          </button>
+          <button type="button" class="preset-chip" data-a="12345" data-b="54321" data-r="2" title="Zero carries needed — already solved at Loop 2">
+            <span class="chip-badge green">0 Carries</span>
+            <b>12345 + 54321</b>
+          </button>
+        </div>
       </div>
 
       <div class="result-area" id="resultArea">
@@ -397,39 +675,166 @@
     var trueSum = a + b;
 
     thinkBtn.disabled = true;
+    var ids = tokenizeProblem(model.manifest, a, b);
+    var out = runModel(model, ids, r);
+
     var tick = 0;
     resultArea.innerHTML =
-      '<div class="thinking"><div class="pulse-ring"><div class="pulse-dot"></div></div>' +
-      '<span id="thinkLabel">looping&hellip; <span class="mono" id="tickCount">0</span> / ' + r + '</span></div>';
+      '<div class="thinking">' +
+        '<div class="pulse-ring"><div class="pulse-dot"></div></div>' +
+        '<div class="thinking-meta">' +
+          '<div id="thinkLabel">looping in latent space&hellip; <b class="mono" id="tickCount">0</b> / ' + r + '</div>' +
+          '<div class="live-probe-note mono" id="liveProbe">probed: &hellip;</div>' +
+        '</div>' +
+      '</div>';
     var tickCount = document.getElementById("tickCount");
+    var liveProbe = document.getElementById("liveProbe");
 
     var stepMs = r <= 8 ? 90 : 45;
     var timer = setInterval(function () {
       tick++;
       if (tickCount) tickCount.textContent = String(Math.min(tick, r));
+      if (liveProbe && out.steps && out.steps[tick]) {
+        var currentStep = out.steps[tick];
+        var isMatch = parseInt(currentStep.value || "0", 10) === trueSum;
+        liveProbe.innerHTML = 'probed state: <span class="highlight-probe">' + currentStep.rawDigits + '</span> (' + (isMatch ? 'carry resolved!' : 'propagating carries...') + ')';
+      }
       if (tick >= r) {
         clearInterval(timer);
-        setTimeout(function () { reveal(a, b, r, trueSum); }, 120);
+        setTimeout(function () { reveal(a, b, r, trueSum, out); }, 120);
       }
     }, stepMs);
   }
 
-  function reveal(a, b, r, trueSum) {
-    var ids = tokenizeProblem(model.manifest, a, b);
-    var out = runModel(model, ids, r);
+  function reveal(a, b, r, trueSum, out) {
+    if (!out) {
+      var ids = tokenizeProblem(model.manifest, a, b);
+      out = runModel(model, ids, r);
+    }
     var predStr = digitsToNumber(model.manifest, out.answerDigits) || "0";
     var pred = parseInt(predStr, 10);
     var correct = pred === trueSum;
-    resultArea.innerHTML =
+
+    var answerBoxHtml =
       '<div class="answer-box">' +
-      '<div><div class="answer-figure ' + (correct ? "good" : "bad") + '">' + pred + '</div>' +
-      '<div class="answer-caption">' + a + ' + ' + b + ' = ' + pred + ' &middot; loop depth ' + r + '</div></div>' +
-      '<div class="status-chip ' + (correct ? "good" : "bad") + '">' + (correct ? "CORRECT" : "true sum: " + trueSum) + '</div>' +
+        '<div>' +
+          '<div class="answer-figure ' + (correct ? "good" : "bad") + '">' + pred.toLocaleString() + '</div>' +
+          '<div class="answer-caption">' + a.toLocaleString() + ' + ' + b.toLocaleString() + ' = ' + pred.toLocaleString() + ' &middot; loop depth ' + r + '</div>' +
+        '</div>' +
+        '<div class="status-chip ' + (correct ? "good" : "bad") + '">' + (correct ? "CORRECT" : "true sum: " + trueSum.toLocaleString()) + '</div>' +
       '</div>';
+
+    var COL_NAMES = ["100k", "10k", "1k", "100s", "10s", "1s"];
+
+    function getCarryNote(prevDigits, currDigits, isSolved, stepNum) {
+      if (stepNum === 0) {
+        return '<span class="carry-action-badge initial">Initial Prelude Embedding</span>';
+      }
+      if (!prevDigits) return '';
+      var changedCols = [];
+      var diffs = [];
+      for (var i = 0; i < currDigits.length; i++) {
+        if (prevDigits[i] !== currDigits[i]) {
+          changedCols.push(COL_NAMES[i]);
+          diffs.push(COL_NAMES[i] + ': ' + prevDigits[i] + '&rarr;' + currDigits[i]);
+        }
+      }
+      if (changedCols.length === 0) {
+        if (isSolved) return '<span class="carry-action-badge solved">&#10003; Solved (stable)</span>';
+        return '<span class="carry-action-badge stable">&bull; Stable state</span>';
+      }
+      if (isSolved) {
+        return '<span class="carry-action-badge solved">&#9889; Carry resolved! (' + diffs.join(', ') + ')</span>';
+      }
+      return '<span class="carry-action-badge propagating">&#9889; Carry propagating (' + diffs.join(', ') + ')</span>';
+    }
+
+    var trajectoryHtml = '<div class="trajectory-card">' +
+      '<div class="trajectory-head">' +
+        '<div class="traj-title">' +
+          '<span class="probe-badge">Latent Probe</span>' +
+          '<h4>Intermediate Readout Across Recurrence Depth</h4>' +
+        '</div>' +
+        '<div class="traj-legend">' +
+          '<span class="traj-leg-item"><span class="dot-diff"></span> updated digit</span>' +
+          '<span class="traj-leg-item"><span class="dot-match"></span> match</span>' +
+        '</div>' +
+      '</div>' +
+      '<p class="traj-desc">' +
+        'Linear probe (<span class="mono">coda &rarr; head</span>) decoded at each core iteration. Watch how carry cascades propagate right-to-left across columns:' +
+      '</p>' +
+      '<div class="steps-column-header">' +
+        '<div class="step-meta-hdr">Depth &amp; Status</div>' +
+        '<div class="step-visual-hdr mono">' +
+          '<span>100k</span><span>10k</span><span>1k</span><span>100s</span><span>10s</span><span>1s</span>' +
+        '</div>' +
+        '<div class="step-val-hdr mono">Value</div>' +
+        '<div class="step-note-hdr">Carry Event</div>' +
+      '</div>' +
+      '<div class="steps-list">';
+
+    var prevDigits = null;
+    (out.steps || []).forEach(function (stepInfo) {
+      var stepVal = parseInt(stepInfo.value || "0", 10);
+      var isSolved = stepVal === trueSum;
+      var raw = stepInfo.rawDigits || "";
+
+      // Find first non-zero digit to dim leading zeros
+      var firstNonZero = -1;
+      for (var k = 0; k < raw.length; k++) {
+        if (raw[k] !== '0') {
+          firstNonZero = k;
+          break;
+        }
+      }
+      if (firstNonZero === -1) firstNonZero = raw.length - 1;
+
+      var digitSpans = "";
+      for (var d = 0; d < raw.length; d++) {
+        var char = raw[d];
+        var isDiff = prevDigits && prevDigits[d] !== char;
+        var isDimmed = d < firstNonZero;
+        var cls = "digit-char" + (isDimmed ? " dimmed-zero" : "") + (isDiff ? " diff" : "");
+        digitSpans += '<span class="' + cls + '" title="' + COL_NAMES[d] + ' column">' + char + '</span>';
+      }
+
+      var carryNote = getCarryNote(prevDigits, raw, isSolved, stepInfo.step);
+      prevDigits = raw;
+
+      trajectoryHtml +=
+        '<div class="step-row' + (stepInfo.step === r ? ' is-final' : '') + (isSolved ? ' is-solved' : '') + '">' +
+          '<div class="step-meta">' +
+            '<span class="step-badge mono">' + stepInfo.label + '</span>' +
+            '<span class="step-status-icon ' + (isSolved ? 'match' : 'pending') + '">' +
+              (isSolved ? '&#10003; match' : '&bull; pending carry') +
+            '</span>' +
+          '</div>' +
+          '<div class="step-visual mono">' + digitSpans + '</div>' +
+          '<div class="step-num-val mono">' + (stepInfo.value ? Number(stepInfo.value).toLocaleString() : "0") + '</div>' +
+          '<div class="step-note-cell">' + carryNote + '</div>' +
+        '</div>';
+    });
+
+    trajectoryHtml += '</div></div>';
+
+    resultArea.innerHTML = answerBoxHtml + trajectoryHtml;
     thinkBtn.disabled = false;
   }
 
   thinkBtn.addEventListener("click", runDemo);
+
+  document.querySelectorAll(".preset-chip").forEach(function (chip) {
+    chip.addEventListener("click", function () {
+      var a = this.getAttribute("data-a");
+      var b = this.getAttribute("data-b");
+      var r = this.getAttribute("data-r");
+      opA.value = a;
+      opB.value = b;
+      depthSlider.value = r;
+      depthVal.textContent = r;
+      runDemo();
+    });
+  });
 
   // ---------------- chart ----------------
   var svg = document.getElementById("chart");

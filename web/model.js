@@ -139,31 +139,8 @@ function block(get, x, prefix, nHeads) {
   return addInto(zeros(x.length, x[0].length), x1, m2);
 }
 
-// Runs the full model. tokenIds: array of length manifest.seq_len.
-// r: number of core-loop iterations ("thinking depth").
-// Returns { answerDigits: number[], logits: number[][] } — logits only at
-// the answer-slot positions, never anything from inside the loop.
-function runModel(model, tokenIds, r) {
-  const { manifest, buffer } = model;
-  const get = makeTensorAccessor(manifest, buffer);
-  const T = manifest.seq_len, D = manifest.d_model, nHeads = manifest.n_heads;
-  const tok = get("tok_emb.weight"), pos = get("pos_emb.weight");
-
-  let e = zeros(T, D);
-  for (let t = 0; t < T; t++) {
-    const id = tokenIds[t];
-    for (let i = 0; i < D; i++) e[t][i] = tok.data[id * D + i] + pos.data[t * D + i];
-  }
-
-  const e0 = block(get, e, "prelude", nHeads);
-  let h = e0;
-  for (let i = 0; i < r; i++) {
-    const injected = addInto(zeros(T, D), h, e0);
-    h = block(get, injected, "core", nHeads);
-  }
-  h = block(get, h, "coda", nHeads);
-  h = layerNorm(get, h, "ln_f.weight", "ln_f.bias");
-
+function decodeHead(get, manifest, h) {
+  const T = manifest.seq_len, D = manifest.d_model;
   const ansStart = manifest.ans_start;
   const answerDigits = [];
   const logitsOut = [];
@@ -182,6 +159,67 @@ function runModel(model, tokenIds, r) {
     logitsOut.push(Array.from(logits));
   }
   return { answerDigits, logits: logitsOut };
+}
+
+function probeLatentState(get, manifest, h) {
+  const nHeads = manifest.n_heads;
+  const codaH = block(get, h, "coda", nHeads);
+  const normed = layerNorm(get, codaH, "ln_f.weight", "ln_f.bias");
+  return decodeHead(get, manifest, normed);
+}
+
+// Runs the full model. tokenIds: array of length manifest.seq_len.
+// r: number of core-loop iterations ("thinking depth").
+// Returns { answerDigits: number[], logits: number[][], steps: object[] } —
+// includes linear probe readouts at each recurrence step so the internal carry
+// resolution progression can be inspected without interrupting latent compute.
+function runModel(model, tokenIds, r) {
+  const { manifest, buffer } = model;
+  const get = makeTensorAccessor(manifest, buffer);
+  const T = manifest.seq_len, D = manifest.d_model, nHeads = manifest.n_heads;
+  const tok = get("tok_emb.weight"), pos = get("pos_emb.weight");
+
+  let e = zeros(T, D);
+  for (let t = 0; t < T; t++) {
+    const id = tokenIds[t];
+    for (let i = 0; i < D; i++) e[t][i] = tok.data[id * D + i] + pos.data[t * D + i];
+  }
+
+  const e0 = block(get, e, "prelude", nHeads);
+  let h = e0;
+
+  // Record linear readout probes across loop iterations
+  const steps = [];
+
+  // Loop 0: prelude embedding prior to any core recurrence
+  const probe0 = probeLatentState(get, manifest, e0);
+  steps.push({
+    step: 0,
+    label: "Loop 0 (Prelude)",
+    answerDigits: probe0.answerDigits,
+    rawDigits: probe0.answerDigits.map((id) => manifest.vocab[id]).join(""),
+    value: digitsToNumber(manifest, probe0.answerDigits)
+  });
+
+  for (let i = 0; i < r; i++) {
+    const injected = addInto(zeros(T, D), h, e0);
+    h = block(get, injected, "core", nHeads);
+
+    const probed = probeLatentState(get, manifest, h);
+    steps.push({
+      step: i + 1,
+      label: "Loop " + (i + 1),
+      answerDigits: probed.answerDigits,
+      rawDigits: probed.answerDigits.map((id) => manifest.vocab[id]).join(""),
+      value: digitsToNumber(manifest, probed.answerDigits)
+    });
+  }
+
+  const codaH = block(get, h, "coda", nHeads);
+  const finalNorm = layerNorm(get, codaH, "ln_f.weight", "ln_f.bias");
+  const finalDecoded = decodeHead(get, manifest, finalNorm);
+
+  return { answerDigits: finalDecoded.answerDigits, logits: finalDecoded.logits, steps };
 }
 
 function tokenizeProblem(manifest, a, b) {
