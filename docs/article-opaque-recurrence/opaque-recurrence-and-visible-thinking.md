@@ -38,6 +38,21 @@ That's it. That's the whole visible surface of eight extra passes of computation
 
 This is the "opaque" half of opaque recurrence, made as literal as I could make it. It's not that the model is hiding something from you. It genuinely has nothing to show. The loop counter is the only artifact of eight passes of thinking.
 
+To make that internal progression tangible, webLTM includes a step-by-step thinking enhancement: an intermediate latent probe that decodes the recurrent state (`coda -> layerNorm -> head`) at each loop iteration without interrupting the recurrent computation.
+
+The clearest illustration is the cascade preset **4999 + 1 = 5000** (run at loop depth r = 4), which reveals how the model ripples carries across columns step by step:
+
+- **Loop 0 (Prelude)**: Decodes to `018110` — the raw prelude embedding before any recurrent core iterations take place.
+- **Loop 1**: Decodes to `005990` (`5990`) — the units addition resolves (9 + 1 = 10, leaving 0 and a carry), but the ripple hasn't propagated across the upper decimal places yet.
+- **Loop 2**: Decodes to `005000` (`5000`) — the carry cascade propagates across three positions simultaneously (tens, hundreds, and thousands), resolving `5990` into the final sum `5000`.
+- **Loop 3**: Decodes to `005000` (`5000`) — stable solved state.
+- **Loop 4**: Decodes to `005090` (`5090`) — demonstrates the drift when recurrent depth extends past the problem's required depth.
+
+![webLTM intermediate latent probe readout revealing carry propagation for 4999 + 1](images/03b-webltm-cascade.png)
+
+Seeing that intermediate readout makes the mechanism concrete: the model isn't spinning empty loops, but executing a multi-step carry resolution depth by depth in latent space.
+
+
 ### 2. Visible Thinking — trained to show it, versus asked to show it
 
 The second demo is where I ended up spending the most time, because a single comparison — opaque model vs. transparent model — undersells what's actually going on. There isn't just "shows reasoning" and "doesn't." There's a middle case that turns out to matter a lot: a model that shows reasoning only because you asked it to.
